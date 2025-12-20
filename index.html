@@ -4,36 +4,34 @@
   <meta charset="UTF-8">
   <title>عداد الضغط</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      margin-top: 50px;
-    }
-    button {
-      font-size: 20px;
-      padding: 15px 30px;
-    }
-    h2 {
-      margin-top: 20px;
-    }
-  </style>
 </head>
 <body>
 
-  <button onclick="increase()">اضغط هنا</button>
-  <h2>عدد الضغطات: <span id="count">0</span></h2>
+<button onclick="increase()">اضغط</button>
+<p>العدد: <span id="count">0</span></p>
 
-  <script>
-    let count = 0;
+<script>
+Telegram.WebApp.ready();
 
-    function increase() {
-      count++;
-      document.getElementById("count").innerText = count;
-    }
+let count = 0;
+const initData = Telegram.WebApp.initData;
 
-    Telegram.WebApp.ready();
-  </script>
+async function increase() {
+  const res = await fetch("https://YOUR_SERVER_URL/click", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ initData })
+  });
+
+  const data = await res.json();
+  if (data.ok) {
+    count = data.count;
+    document.getElementById("count").innerText = count;
+  } else {
+    alert("طلب مرفوض");
+  }
+}
+</script>
 
 </body>
 </html>
