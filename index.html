@@ -17,7 +17,7 @@ let count = 0;
 const initData = Telegram.WebApp.initData;
 
 async function increase() {
-  const res = await fetch("https://YOUR_SERVER_URL/click", {
+  const res = await fetch("https://webapp-wxag.onrender.com/click", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({ initData })
