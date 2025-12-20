@@ -6,7 +6,7 @@ import json
 import os
 app = Flask(__name__)
 
-BOT_TOKEN = "PUT_YOUR_BOT_TOKEN_HERE"
+BOT_TOKEN = "8221519604:AAGQMTlvAJPu0wVOs47XO_IrN_F4rKgn5WU"
 
 # تخزين مؤقت (بدل DB)
 counters = {}
