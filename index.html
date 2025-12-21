@@ -13,7 +13,6 @@
 <script>
 Telegram.WebApp.ready();
 
-// مهم: هذا يجب أن يكون غير فارغ
 const initData = Telegram.WebApp.initData;
 
 document.getElementById("btn").onclick = async () => {
@@ -24,7 +23,10 @@ document.getElementById("btn").onclick = async () => {
     "https://webapp-1-7ti3.onrender.com/click",
     {
       method: "POST",
-      body: body
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: body.toString()
     }
   );
 

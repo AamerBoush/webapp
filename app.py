@@ -4,10 +4,7 @@ from urllib.parse import parse_qsl
 
 app = Flask(__name__)
 
-# التوكن من Environment Variable
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-
-# تخزين مؤقت (بدل DB)
 counters = {}
 
 @app.route("/")
@@ -37,6 +34,7 @@ def verify_telegram(init_data: str) -> bool:
 
 @app.route("/click", methods=["POST"])
 def click():
+    # ✅ هذا السطر هو مفتاح الحل
     init_data = request.form.get("initData")
 
     if not init_data:
