@@ -11,11 +11,9 @@ counters = {}
 def home():
     return "OK"
 
-# 🔐 تحقق Telegram
 def verify_telegram(init_data: str) -> bool:
     data = dict(parse_qsl(init_data))
     received_hash = data.pop("hash", None)
-
     if not received_hash:
         return False
 
@@ -33,23 +31,14 @@ def verify_telegram(init_data: str) -> bool:
     return computed_hash == received_hash
 
 
-# ✅ نسمح بكل شيء: POST + OPTIONS
-@app.route("/click", methods=["POST", "OPTIONS"])
+# 🔥 نوقف Flask من أي parsing تلقائي
+@app.route("/click", methods=["POST"], provide_automatic_options=False)
 def click():
-
-    # 🔥 إذا OPTIONS (preflight) نرد مباشرة
-    if request.method == "OPTIONS":
-        return ("", 204)
-
-    # 🔥 نقرأ initData من أي مكان ممكن
-    init_data = (
-        request.form.get("initData")
-        or (request.json.get("initData") if request.is_json else None)
-        or request.data.decode(errors="ignore")
-    )
+    # نقرأ RAW BODY فقط
+    init_data = request.get_data(as_text=True)
 
     if not init_data:
-        return jsonify({"ok": False, "error": "no initData"}), 400
+        return jsonify({"ok": False, "error": "no data"}), 400
 
     if not verify_telegram(init_data):
         return jsonify({"ok": False, "error": "invalid signature"}), 403
