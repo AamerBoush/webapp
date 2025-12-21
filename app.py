@@ -9,8 +9,9 @@ counters = {}
 
 @app.route("/")
 def home():
-    return "Server is running ✅"
+    return "OK"
 
+# 🔐 تحقق Telegram
 def verify_telegram(init_data: str) -> bool:
     data = dict(parse_qsl(init_data))
     received_hash = data.pop("hash", None)
@@ -32,10 +33,20 @@ def verify_telegram(init_data: str) -> bool:
     return computed_hash == received_hash
 
 
-@app.route("/click", methods=["POST"])
+# ✅ نسمح بكل شيء: POST + OPTIONS
+@app.route("/click", methods=["POST", "OPTIONS"])
 def click():
-    # ✅ هذا السطر هو مفتاح الحل
-    init_data = request.form.get("initData")
+
+    # 🔥 إذا OPTIONS (preflight) نرد مباشرة
+    if request.method == "OPTIONS":
+        return ("", 204)
+
+    # 🔥 نقرأ initData من أي مكان ممكن
+    init_data = (
+        request.form.get("initData")
+        or (request.json.get("initData") if request.is_json else None)
+        or request.data.decode(errors="ignore")
+    )
 
     if not init_data:
         return jsonify({"ok": False, "error": "no initData"}), 400

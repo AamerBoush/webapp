@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>عداد الضغط</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
 <button id="btn">اضغط</button>
-<p>العدد: <span id="count">0</span></p>
+<div id="count">0</div>
 
 <script>
 Telegram.WebApp.ready();
@@ -16,27 +15,16 @@ Telegram.WebApp.ready();
 const initData = Telegram.WebApp.initData;
 
 document.getElementById("btn").onclick = async () => {
-  const body = new URLSearchParams();
-  body.append("initData", initData);
-
   const res = await fetch(
     "https://webapp-1-7ti3.onrender.com/click",
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: body.toString()
+      body: initData
     }
   );
 
   const data = await res.json();
-
-  if (data.ok) {
-    document.getElementById("count").innerText = data.count;
-  } else {
-    alert(data.error);
-  }
+  document.getElementById("count").innerText = data.count || "ERR";
 };
 </script>
 
