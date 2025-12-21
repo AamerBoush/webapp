@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>عداد الضغط</title>
-
-  <!-- Telegram -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Styles -->
   <style>
     :root {
       --bg: #0f1220;
@@ -77,13 +74,6 @@
       color: white;
       background: linear-gradient(135deg, var(--primary), var(--secondary));
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
-      box-shadow: 0 6px 18px rgba(108,99,255,0.4);
-    }
-
-    button:active {
-      transform: scale(0.97);
-      box-shadow: 0 3px 10px rgba(108,99,255,0.3);
     }
 
     .footer {
@@ -104,9 +94,7 @@
 
     <button id="btn">اضغط الآن</button>
 
-    <div class="footer">
-      يعمل داخل Telegram
-    </div>
+    <div class="footer">Telegram Mini App</div>
   </div>
 </div>
 
@@ -114,18 +102,19 @@
 Telegram.WebApp.ready();
 
 const initData = Telegram.WebApp.initData;
-const countEl = document.getElementById("count");
 const btn = document.getElementById("btn");
+const countEl = document.getElementById("count");
 
 btn.onclick = async () => {
-  btn.disabled = true;
-
   try {
     const res = await fetch(
       "https://webapp-1-7ti3.onrender.com/click",
       {
         method: "POST",
-        body: initData
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ initData })
       }
     );
 
@@ -133,11 +122,9 @@ btn.onclick = async () => {
     if (data.ok) {
       countEl.innerText = data.count;
     }
-  } catch (e) {
+  } catch {
     alert("خطأ في الاتصال");
   }
-
-  btn.disabled = false;
 };
 </script>
 

@@ -1,15 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import hashlib, hmac, os, json
 from urllib.parse import parse_qsl
 
 app = Flask(__name__)
+CORS(app)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 counters = {}
-
-@app.route("/")
-def home():
-    return "OK"
 
 def verify_telegram(init_data: str) -> bool:
     data = dict(parse_qsl(init_data))
@@ -31,20 +29,19 @@ def verify_telegram(init_data: str) -> bool:
     return computed_hash == received_hash
 
 
-# 🔥 نوقف Flask من أي parsing تلقائي
-@app.route("/click", methods=["POST"], provide_automatic_options=False)
+@app.route("/click", methods=["POST"])
 def click():
-    # نقرأ RAW BODY فقط
-    init_data = request.get_data(as_text=True)
+    data = request.get_json(silent=True)
+    if not data or "initData" not in data:
+        return jsonify({"ok": False}), 400
 
-    if not init_data:
-        return jsonify({"ok": False, "error": "no data"}), 400
+    init_data = data["initData"]
 
     if not verify_telegram(init_data):
-        return jsonify({"ok": False, "error": "invalid signature"}), 403
+        return jsonify({"ok": False}), 403
 
-    data = dict(parse_qsl(init_data))
-    user = json.loads(data["user"])
+    parsed = dict(parse_qsl(init_data))
+    user = json.loads(parsed["user"])
     user_id = user["id"]
 
     counters[user_id] = counters.get(user_id, 0) + 1
@@ -53,3 +50,8 @@ def click():
         "ok": True,
         "count": counters[user_id]
     })
+
+
+@app.route("/")
+def home():
+    return "OK"
