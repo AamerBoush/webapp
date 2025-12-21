@@ -9,16 +9,14 @@ CORS(app)
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 counters = {}
 
-def check_telegram_auth(init_data: str) -> bool:
-    parsed = dict(parse_qsl(init_data, keep_blank_values=True))
-
-    if "hash" not in parsed:
+def verify_telegram(init_data: str) -> bool:
+    data = dict(parse_qsl(init_data, keep_blank_values=True))
+    received_hash = data.pop("hash", None)
+    if not received_hash:
         return False
 
-    received_hash = parsed.pop("hash")
-
     data_check_string = "\n".join(
-        f"{k}={v}" for k, v in sorted(parsed.items())
+        f"{k}={v}" for k, v in sorted(data.items())
     )
 
     secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
@@ -31,19 +29,16 @@ def check_telegram_auth(init_data: str) -> bool:
     return calculated_hash == received_hash
 
 
-@app.route("/click", methods=["POST", "OPTIONS"])
+@app.route("/click", methods=["POST"])
 def click():
-    if request.method == "OPTIONS":
-        return ("", 204)
+    payload = request.get_json(silent=True)
+    if not payload or "initData" not in payload:
+        return jsonify({"ok": False}), 400
 
-    data = request.get_json(silent=True)
-    if not data or "initData" not in data:
-        return jsonify({"ok": False, "error": "no initData"}), 400
+    init_data = payload["initData"]
 
-    init_data = data["initData"]
-
-    if not check_telegram_auth(init_data):
-        return jsonify({"ok": False, "error": "invalid signature"}), 403
+    if not verify_telegram(init_data):
+        return jsonify({"ok": False}), 403
 
     parsed = dict(parse_qsl(init_data, keep_blank_values=True))
     user = json.loads(parsed["user"])
@@ -51,10 +46,7 @@ def click():
 
     counters[user_id] = counters.get(user_id, 0) + 1
 
-    return jsonify({
-        "ok": True,
-        "count": counters[user_id]
-    })
+    return jsonify({"ok": True, "count": counters[user_id]})
 
 
 @app.route("/")
