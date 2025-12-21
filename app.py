@@ -1,21 +1,25 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import hashlib, hmac, os, json
 from urllib.parse import parse_qsl
 
 app = Flask(__name__)
-CORS(app)
 
-BOT_TOKEN = os.environ.get("8221519604:AAGQMTlvAJPu0wVOs47XO_IrN_F4rKgn5WU")
+# التوكن من Environment Variable
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+
+# تخزين مؤقت (بدل DB)
 counters = {}
 
 @app.route("/")
 def home():
     return "Server is running ✅"
 
-def verify_telegram(init_data):
+def verify_telegram(init_data: str) -> bool:
     data = dict(parse_qsl(init_data))
     received_hash = data.pop("hash", None)
+
+    if not received_hash:
+        return False
 
     data_check_string = "\n".join(
         f"{k}={v}" for k, v in sorted(data.items())
@@ -33,18 +37,21 @@ def verify_telegram(init_data):
 
 @app.route("/click", methods=["POST"])
 def click():
-    body = request.get_json()
+    init_data = request.form.get("initData")
 
-    if not body or "initData" not in body:
+    if not init_data:
         return jsonify({"ok": False, "error": "no initData"}), 400
 
-    if not verify_telegram(body["initData"]):
+    if not verify_telegram(init_data):
         return jsonify({"ok": False, "error": "invalid signature"}), 403
 
-    data = dict(parse_qsl(body["initData"]))
+    data = dict(parse_qsl(init_data))
     user = json.loads(data["user"])
     user_id = user["id"]
 
     counters[user_id] = counters.get(user_id, 0) + 1
 
-    return jsonify({"ok": True, "count": counters[user_id]})
+    return jsonify({
+        "ok": True,
+        "count": counters[user_id]
+    })
