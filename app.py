@@ -6,13 +6,15 @@ from urllib.parse import parse_qsl
 app = Flask(__name__)
 CORS(app)
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("BOT_TOKEN")  # ضع التوكن في Render Env
+
 counters = {}
 
 def verify_telegram(init_data: str) -> bool:
     data = dict(parse_qsl(init_data, keep_blank_values=True))
-    received_hash = data.pop("hash", None)
-    if not received_hash:
+
+    hash_value = data.pop("hash", None)
+    if not hash_value:
         return False
 
     data_check_string = "\n".join(
@@ -20,13 +22,13 @@ def verify_telegram(init_data: str) -> bool:
     )
 
     secret_key = hashlib.sha256(BOT_TOKEN.encode()).digest()
-    calculated_hash = hmac.new(
+    calc_hash = hmac.new(
         secret_key,
         data_check_string.encode(),
         hashlib.sha256
     ).hexdigest()
 
-    return calculated_hash == received_hash
+    return calc_hash == hash_value
 
 
 @app.route("/click", methods=["POST"])
@@ -36,6 +38,7 @@ def click():
         return jsonify({"ok": False}), 400
 
     init_data = payload["initData"]
+    print("#P#INIT DATA:", init_data[:100])
 
     if not verify_telegram(init_data):
         return jsonify({"ok": False}), 403
@@ -46,7 +49,10 @@ def click():
 
     counters[user_id] = counters.get(user_id, 0) + 1
 
-    return jsonify({"ok": True, "count": counters[user_id]})
+    return jsonify({
+        "ok": True,
+        "count": counters[user_id]
+    })
 
 
 @app.route("/")
