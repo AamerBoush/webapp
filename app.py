@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonifyfrom flask import Flask, request, jsonify
 from flask_cors import CORS
 import hashlib, hmac, os, json
 from urllib.parse import parse_qsl
@@ -35,6 +35,7 @@ def click():
     init_data = data.get("initData")
 
     if not verify_telegram(init_data):
+        print(init_data)
         return jsonify({"ok": False}), 403
 
     parsed = dict(parse_qsl(init_data, keep_blank_values=True))
@@ -57,3 +58,5 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port)
+
+
