@@ -4,7 +4,13 @@ import hashlib, hmac, os, json
 from urllib.parse import parse_qsl
 
 app = Flask(__name__)
-CORS(app)
+
+CORS(
+    app,
+    resources={r"/*": {"origins": "*"}},
+    allow_headers=["Content-Type"],
+    methods=["POST", "OPTIONS"]
+)
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 counters = {}
@@ -29,8 +35,11 @@ def verify_telegram(init_data: str) -> bool:
     return computed_hash == received_hash
 
 
-@app.route("/click", methods=["POST"])
+@app.route("/click", methods=["POST", "OPTIONS"])
 def click():
+    if request.method == "OPTIONS":
+        return ("", 204)
+
     data = request.get_json(silent=True)
     if not data or "initData" not in data:
         return jsonify({"ok": False}), 400
@@ -46,10 +55,7 @@ def click():
 
     counters[user_id] = counters.get(user_id, 0) + 1
 
-    return jsonify({
-        "ok": True,
-        "count": counters[user_id]
-    })
+    return jsonify({"ok": True, "count": counters[user_id]})
 
 
 @app.route("/")
