@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import hashlib, hmac, os, json
 from urllib.parse import parse_qsl
-
+BOT_TOKEN ="8221519604:AAGQMTlvAJPu0wVOs47XO_IrN_F4rKgn5WU"
 app = Flask(__name__)
 
 CORS(
@@ -12,7 +12,7 @@ CORS(
     methods=["POST", "OPTIONS"]
 )
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+#BOT_TOKEN = os.environ.get("BOT_TOKEN")
 counters = {}
 
 def verify_telegram(init_data: str) -> bool:
