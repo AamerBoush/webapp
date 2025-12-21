@@ -16,7 +16,7 @@ def click():
         return jsonify({"ok": False, "error": "no user id"}), 400
 
     user_id = str(data["user_id"])
-
+    print(user_id)
     counters[user_id] = counters.get(user_id, 0) + 1
 
     return jsonify({
@@ -32,3 +32,4 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port)
+
