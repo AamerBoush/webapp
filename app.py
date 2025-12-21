@@ -5,20 +5,29 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-counter = 0
+# عداد لكل مستخدم
+counters = {}
 
 @app.route("/click", methods=["POST"])
 def click():
-    global counter
-    counter += 1
+    data = request.get_json(silent=True)
+
+    if not data or "user_id" not in data:
+        return jsonify({"ok": False, "error": "no user id"}), 400
+
+    user_id = str(data["user_id"])
+
+    counters[user_id] = counters.get(user_id, 0) + 1
+
     return jsonify({
         "ok": True,
-        "count": counter
+        "user_id": user_id,
+        "count": counters[user_id]
     })
 
 @app.route("/")
 def home():
-    return "Server is running"
+    return "Server running"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
