@@ -2,12 +2,12 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>عداد الضغط</title>
+  <title>عداد</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-<button onclick="increase()">اضغط</button>
+<button id="btn">اضغط</button>
 <p>العدد: <span id="count">0</span></p>
 
 <script>
@@ -15,32 +15,24 @@ Telegram.WebApp.ready();
 
 const initData = Telegram.WebApp.initData;
 
-// 🔴 تشخيص
-if (!initData || initData.length === 0) {
-  document.body.innerHTML = "<h3>❌ initData فارغ</h3>";
-}
-
-async function increase() {
-  console.log("initData:", initData);
-
+document.getElementById("btn").onclick = async () => {
   const res = await fetch(
     "https://webapp-1-7ti3.onrender.com/click",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {"Content-Type": "application/json"},
       body: JSON.stringify({ initData })
     }
   );
 
   const data = await res.json();
-  console.log(data);
 
   if (data.ok) {
     document.getElementById("count").innerText = data.count;
   } else {
     alert(data.error);
   }
-}
+};
 </script>
 
 </body>
