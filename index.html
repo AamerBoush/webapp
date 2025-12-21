@@ -98,35 +98,33 @@
   </div>
 </div>
 
+
 <script>
 Telegram.WebApp.ready();
 
-const initData = Telegram.WebApp.initData;
+const userId = Telegram.WebApp.initDataUnsafe.user.id;
 const btn = document.getElementById("btn");
 const countEl = document.getElementById("count");
 
 btn.onclick = async () => {
-  try {
-    const res = await fetch(
-      "https://webapp-1-7ti3.onrender.com/click",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ initData })
-      }
-    );
-
-    const data = await res.json();
-    if (data.ok) {
-      countEl.innerText = data.count;
+  const res = await fetch(
+    "https://webapp-1-7ti3.onrender.com/click",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId
+      })
     }
-  } catch {
-    alert("خطأ في الاتصال");
+  );
+
+  const data = await res.json();
+  if (data.ok) {
+    countEl.innerText = data.count;
   }
 };
 </script>
-
 </body>
 </html>
+
+
