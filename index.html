@@ -3,143 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>عداد الضغط</title>
+  <title>Telegram Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
-    :root {
-      --bg: #0f1220;
-      --card: #1b1f3b;
-      --primary: #6c63ff;
-      --secondary: #00d4ff;
-      --text: #ffffff;
-      --muted: #b8b8d1;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
     body {
       margin: 0;
       height: 100vh;
-      background: linear-gradient(160deg, var(--bg), #090b16);
+      background: #0f1220;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text);
+      color: #fff;
+      font-family: system-ui, sans-serif;
     }
-
-    .app {
+    .card {
+      background: #1b1f3b;
+      padding: 30px;
+      border-radius: 18px;
+      text-align: center;
       width: 100%;
       max-width: 360px;
-      padding: 20px;
     }
-
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 30px 20px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    p {
-      margin-top: 8px;
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .counter {
-      margin: 30px 0;
+    .count {
       font-size: 48px;
-      font-weight: 700;
-      color: var(--secondary);
+      margin: 20px 0;
+      color: #00d4ff;
     }
-
     button {
       width: 100%;
-      border: none;
-      border-radius: 14px;
       padding: 16px;
       font-size: 18px;
-      font-weight: 600;
-      color: white;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      cursor: pointer;
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 12px;
-      color: var(--muted);
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg,#6c63ff,#00d4ff);
+      color: #fff;
     }
   </style>
 </head>
 <body>
 
-<div class="app">
-  <div class="card">
-    <h1>عداد الضغط</h1>
-    <p>اضغط على الزر وشاهد العداد يزيد</p>
-
-    <div id="count" class="counter">0</div>
-
-    <button id="btn">اضغط الآن</button>
-
-    <div class="footer">Telegram Mini App</div>
-  </div>
+<div class="card">
+  <h2>عداد الضغط</h2>
+  <div id="count" class="count">0</div>
+  <button id="btn">اضغط</button>
 </div>
 
 <script>
 Telegram.WebApp.ready();
 
-// نستخدم initDataUnsafe فقط لمعرفة المستخدم (بدون تحقق)
-const unsafe = Telegram.WebApp.initDataUnsafe;
+// نرسل initData فقط (موقّع)
+const initData = Telegram.WebApp.initData;
 
-if (!unsafe.user) {
-  alert("لم يتم الحصول على معلومات المستخدم من Telegram");
-} else {
-  const userId = unsafe.user.id;
-  const btn = document.getElementById("btn");
-  const countEl = document.getElementById("count");
+const btn = document.getElementById("btn");
+const countEl = document.getElementById("count");
 
-  btn.onclick = async () => {
-    try {
-      const res = await fetch(
-        "https://insipidly-transdesert-noble.ngrok-free.dev/click",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            initData: Telegram.WebApp.initData
-          })
-        }
-      );
-
-      const data = await res.json();
-      if (data.ok) {
-        countEl.innerText = data.count;
-      } else {
-        alert("خطأ من السيرفر");
-      }
-    } catch {
-      alert("خطأ في الاتصال");
+btn.onclick = async () => {
+  const res = await fetch(
+    "https://insipidly-transdesert-noble.ngrok-free.dev/click",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData })
     }
-  };
-}
+  );
+
+  const data = await res.json();
+  if (data.ok) {
+    countEl.innerText = data.count;
+  } else {
+    alert("فشل التوثيق");
+  }
+};
 </script>
 
 </body>
 </html>
-
-
