@@ -13,22 +13,32 @@
 <script>
 Telegram.WebApp.ready();
 
-let count = 0;
 const initData = Telegram.WebApp.initData;
 
+// 🔴 تشخيص
+if (!initData || initData.length === 0) {
+  document.body.innerHTML = "<h3>❌ initData فارغ</h3>";
+}
+
 async function increase() {
-  const res = await fetch("https://webapp-1-7ti3.onrender.com/click", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ initData })
-  });
+  console.log("initData:", initData);
+
+  const res = await fetch(
+    "https://YOUR-RENDER-URL.onrender.com/click",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData })
+    }
+  );
 
   const data = await res.json();
+  console.log(data);
+
   if (data.ok) {
-    count = data.count;
-    document.getElementById("count").innerText = count;
+    document.getElementById("count").innerText = data.count;
   } else {
-    alert("طلب مرفوض");
+    alert(data.error);
   }
 }
 </script>
