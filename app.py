@@ -41,6 +41,7 @@ def click():
     print("#P#INIT DATA:", init_data[:100])
 
     if not verify_telegram(init_data):
+        print("#P#INIT DATA:", init_data[:100])
         return jsonify({"ok": False}), 403
 
     parsed = dict(parse_qsl(init_data, keep_blank_values=True))
@@ -63,3 +64,4 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port)
+
