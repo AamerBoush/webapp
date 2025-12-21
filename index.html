@@ -121,7 +121,7 @@ if (!unsafe.user) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            user_id: userId
+            initData: Telegram.WebApp.initData
           })
         }
       );
@@ -141,3 +141,4 @@ if (!unsafe.user) {
 
 </body>
 </html>
+
