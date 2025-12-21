@@ -37,7 +37,7 @@ def verify_telegram(init_data: str) -> bool:
 
 @app.route("/click", methods=["POST", "OPTIONS"])
 def click():
-    print(init_data)
+    
 
     if request.method == "OPTIONS":
         return ("", 204)
@@ -47,7 +47,7 @@ def click():
         return jsonify({"ok": False}), 400
 
     init_data = data["initData"]
-
+    print(init_data)
     if not verify_telegram(init_data):
         return jsonify({"ok": False}), 403
 
@@ -67,4 +67,5 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port)
+
 
