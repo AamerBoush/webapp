@@ -456,13 +456,20 @@
       }
 
       const data = await res.json().catch(()=>null);
-
+    
+      const detail =
+        (data && typeof data.detail === "string" && data.detail.trim())
+          ? data.detail.trim()
+          : "حدث خطأ غير متوقع";
+      
       if (res.status === 401 || res.status === 403) {
-        throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "Blocked"));
+        throw new Error(detail);
       }
       if (!res.ok) {
-        throw new Error(`${res.status}: ` + (data && data.detail ? data.detail : JSON.stringify(data)));
+        throw new Error(detail);
       }
+      
+    
       return data;
     }
 
