@@ -3,67 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DeFi Wallet</title>
+  <title>Wallet</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     :root{
-      --bg0:#070a12; --bg1:#0b1021;
+      --bg:#070a12;
       --card:rgba(255,255,255,.06);
       --stroke:rgba(255,255,255,.10);
       --text:#eef2ff;
       --muted:rgba(238,242,255,.62);
       --green:#4cd964;
       --blue:#2b6cff;
-      --shadow: 0 24px 90px rgba(0,0,0,.50);
       --r:22px;
+      --shadow:0 22px 70px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box}
     body{
       margin:0; min-height:100vh;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
       color:var(--text);
       background:
-        radial-gradient(900px 520px at 18% 10%, rgba(43,108,255,.22), transparent 60%),
-        radial-gradient(700px 520px at 85% 20%, rgba(76,217,100,.14), transparent 60%),
-        radial-gradient(800px 520px at 50% 95%, rgba(255,204,0,.10), transparent 58%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
+        radial-gradient(900px 520px at 18% 10%, rgba(43,108,255,.18), transparent 60%),
+        radial-gradient(700px 520px at 85% 25%, rgba(76,217,100,.10), transparent 60%),
+        linear-gradient(180deg,#05070f,var(--bg));
     }
-    .wrap{max-width:980px;margin:0 auto;padding:16px 14px 30px}
+    .wrap{max-width:920px;margin:0 auto;padding:18px 14px 28px}
+    .top{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:8px 2px 14px;
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .orb{
+      width:40px;height:40px;border-radius:16px;
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.75), transparent 60%),
+        linear-gradient(135deg, rgba(43,108,255,.90), rgba(76,217,100,.55));
+      border:1px solid var(--stroke);
+      box-shadow:0 16px 48px rgba(43,108,255,.18);
+    }
+    .brand b{display:block;font-weight:950;letter-spacing:.2px}
+    .brand small{color:var(--muted)}
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
       border:1px solid var(--stroke);
       border-radius:var(--r);
-      box-shadow: var(--shadow);
+      box-shadow:var(--shadow);
       backdrop-filter: blur(12px);
     }
-    .top{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:10px 2px 14px;
+    .gate{
+      min-height:72vh;display:grid;place-items:center;
     }
-    .brand{display:flex;align-items:center;gap:10px}
-    .orb{
-      width:42px;height:42px;border-radius:16px;
-      background:
-        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.8), transparent 60%),
-        linear-gradient(135deg, rgba(43,108,255,.95), rgba(76,217,100,.55));
-      border:1px solid var(--stroke);
-      box-shadow: 0 18px 55px rgba(43,108,255,.20);
-    }
-    .brand b{display:block;font-weight:950}
-    .brand small{color:var(--muted)}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      background:rgba(255,255,255,.07);
-      border:1px solid var(--stroke);
-      color:var(--muted);
-      font-size:12px;
-    }
-    .dot{width:8px;height:8px;border-radius:99px;background:#ff3b30}
-    .dot.ok{background:var(--green)}
-
-    .gate{min-height:72vh;display:grid;place-items:center}
     .gateInner{width:min(560px,100%); padding:18px}
     .eyeBtn{
       width:100%;
@@ -75,20 +65,43 @@
       font-weight:950;
       cursor:pointer;
       display:flex;align-items:center;justify-content:center;gap:10px;
-      box-shadow: 0 22px 70px rgba(43,108,255,.22);
+      box-shadow: 0 22px 70px rgba(43,108,255,.18);
     }
     .eyeBtn:disabled{opacity:.45;cursor:not-allowed}
-    .hint{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.6}
-    .err{margin-top:12px;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.85);font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:12px;display:none}
+    .hint{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.7
+    }
+    .err{
+      margin-top:12px;
+      white-space:pre-wrap;word-break:break-word;
+      color:rgba(255,255,255,.85);
+      font-size:12px;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px;
+      display:none;
+    }
 
-    .wallet{display:none;gap:14px}
+    .wallet{display:none; gap:14px}
     .pad{padding:18px}
+
     .balanceWrap{display:grid;place-items:center;text-align:center}
     .balanceLabel{color:var(--muted);font-size:12px}
-    .balanceNum{font-size:46px;font-weight:1000;letter-spacing:.4px;color:var(--green);margin:6px 0 6px}
+    .balanceNum{
+      font-size:48px;font-weight:1000;letter-spacing:.4px;
+      color:var(--green);
+      margin:8px 0 6px;
+    }
     .rateLine{color:var(--muted);font-size:12px}
 
-    .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .actions{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:10px;margin-top:16px;
+    }
     .action{
       border-radius:20px;
       border:1px solid rgba(255,255,255,.10);
@@ -96,7 +109,9 @@
       padding:14px 12px;
       cursor:pointer;
       display:flex;flex-direction:column;align-items:center;gap:10px;
+      transition: transform .08s ease;
     }
+    .action:active{transform: translateY(1px)}
     .ic{
       width:46px;height:46px;border-radius:18px;
       border:1px solid rgba(255,255,255,.12);
@@ -106,6 +121,45 @@
     .action b{font-weight:950;font-size:13px}
     .action small{color:var(--muted);margin-top:-6px}
 
+    .sectionTitle{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 4px;
+      margin-top:10px;
+      color:rgba(238,242,255,.86);
+      font-weight:950;
+      font-size:13px;
+    }
+    .list{
+      margin-top:10px;
+      display:flex;flex-direction:column;
+      gap:10px;
+    }
+    .item{
+      padding:12px 12px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .item .left{display:flex;align-items:center;gap:10px}
+    .badge{
+      width:36px;height:36px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      display:grid;place-items:center;
+    }
+    .meta{display:flex;flex-direction:column;gap:2px}
+    .meta b{font-size:13px}
+    .meta small{color:var(--muted);font-size:12px}
+    .amt{
+      font-weight:1000;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .amt.out{color:rgba(255,255,255,.86)}
+    .amt.in{color:var(--green)}
+
+    /* Sheet */
     .backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.55);
       display:none;align-items:flex-end;justify-content:center;
@@ -143,7 +197,7 @@
       background: rgba(0,0,0,.20);
       color: rgba(255,255,255,.92);
       outline:none;font-size:14px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
     }
     .grid2{display:grid;gap:10px;grid-template-columns:1fr}
     @media(min-width:720px){ .grid2{grid-template-columns:1fr 1fr} }
@@ -157,7 +211,16 @@
     }
     .btn.primary{background: rgba(43,108,255,.20); border-color: rgba(43,108,255,.35)}
     .btn.good{background: rgba(76,217,100,.16); border-color: rgba(76,217,100,.28)}
-    .msg{margin-top:12px;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.85);font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:12px}
+    .msg{
+      margin-top:12px;
+      white-space:pre-wrap;word-break:break-word;
+      color:rgba(255,255,255,.85);
+      font-size:12px;
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px
+    }
     .maxLine{color:var(--muted);font-size:12px;margin-top:8px}
     .maxLink{color:#9bb8ff;cursor:pointer;font-weight:950}
   </style>
@@ -168,11 +231,12 @@
       <div class="brand">
         <div class="orb"></div>
         <div>
-          <b>DeFi Wallet</b>
+          <b>Wallet</b>
           <small>TON • Points</small>
         </div>
       </div>
-      <div class="pill"><span id="dot" class="dot"></span><span id="env">تحقق…</span></div>
+      <!-- لا يوجد Telegram indicator -->
+      <button class="close" id="closeApp">إغلاق</button>
     </div>
 
     <div id="gate" class="gate">
@@ -230,9 +294,14 @@
             <small>Code</small>
           </div>
         </div>
-
-        <div id="status" class="msg">—</div>
       </div>
+
+      <div class="sectionTitle">
+        <span>آخر العمليات</span>
+        <!-- لا زر تحديث -->
+      </div>
+
+      <div id="history" class="list"></div>
     </div>
   </div>
 
@@ -240,17 +309,14 @@
     <div class="sheet">
       <div class="head">
         <div id="sheetTitle" class="title">—</div>
-        <button id="close" class="close">إغلاق</button>
+        <button id="closeSheet" class="close">إغلاق</button>
       </div>
       <div id="sheetBody" class="body"></div>
     </div>
   </div>
 
   <script>
-    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها لدومين الباك
-
-    const dot = document.getElementById("dot");
-    const env = document.getElementById("env");
+    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها
 
     const gate = document.getElementById("gate");
     const wallet = document.getElementById("wallet");
@@ -258,78 +324,64 @@
 
     const pointsEl = document.getElementById("points");
     const rateEl = document.getElementById("rate");
-    const statusEl = document.getElementById("status");
+    const historyEl = document.getElementById("history");
 
     const backdrop = document.getElementById("backdrop");
     const sheetTitle = document.getElementById("sheetTitle");
     const sheetBody = document.getElementById("sheetBody");
 
-    let state = { points: 0, rate: 0, ton_address: "" };
+    let state = { user_id: 0, points: 0, rate: 0, ton_address: "" };
 
     function tg(){ return (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null; }
-    function canCallApi(){
-      const t = tg();
-      return !!t && typeof t.initData === "string" && t.initData.length > 0;
-    }
     function joinUrl(base, path){
       if (base.endsWith("/") && path.startsWith("/")) return base.slice(0,-1)+path;
       if (!base.endsWith("/") && !path.startsWith("/")) return base+"/"+path;
       return base+path;
-    }
-    function setStatus(x){
-      statusEl.textContent = (typeof x === "string") ? x : JSON.stringify(x, null, 2);
     }
     function showGateErr(msg){
       gateErr.style.display = "block";
       gateErr.textContent = msg;
     }
 
-
-    async function apiFetch(path, { method="GET", body=null } = {}) {
-        const t = tg();
-        if (!t || !t.initData || t.initData.length === 0) {
-          throw new Error("initData غير موجود. افتح الويب آب من داخل Telegram عبر زر web_app.");
-        }
-      
-        // ✅ no-cache + bypass ngrok warning
-        const url = joinUrl(API_BASE, path) + (path.includes("?") ? "&" : "?") + "t=" + Date.now();
-      
-        const res = await fetch(url, {
-          method,
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Telegram-Init-Data": t.initData,
-      
-            // ✅ هذا يحل ERR_NGROK_6024
-            "ngrok-skip-browser-warning": "1"
-          },
-          body: body ? JSON.stringify(body) : null
-        });
-      
-        const ct = (res.headers.get("content-type") || "").toLowerCase();
-      
-        // ✅ لو رجع HTML (تحذير ngrok / API_BASE غلط) نوقف فورًا ونوضح السبب
-        if (!ct.includes("application/json")) {
-          const text = await res.text().catch(() => "");
-          if (text.includes("ERR_NGROK_6024") || text.includes("ngrok")) {
-            throw new Error("ngrok يمنع الوصول (ERR_NGROK_6024). تم حلّه بإضافة ngrok-skip-browser-warning لكن تأكد أن CORS يسمح به.");
-          }
-          throw new Error("الـ API رجّع HTML بدل JSON. تأكد أن API_BASE صحيح ويشير لـ FastAPI وليس صفحة أخرى.");
-        }
-      
-        const data = await res.json().catch(() => null);
-      
-        if (res.status === 401 || res.status === 403) {
-          throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "Blocked"));
-        }
-        if (!res.ok) {
-          throw new Error(`${res.status}: ` + (data && data.detail ? data.detail : JSON.stringify(data)));
-        }
-      
-        return data;
+    async function apiFetch(path, {method="GET", body=null} = {}){
+      const t = tg();
+      if (!t || !t.initData || t.initData.length === 0) {
+        throw new Error("initData غير موجود. افتحها من Telegram عبر زر web_app.");
       }
-      
+
+      const url = joinUrl(API_BASE, path) + (path.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+      const res = await fetch(url, {
+        method,
+        cache: "no-store",
+        headers: {
+          "Content-Type":"application/json",
+          "X-Telegram-Init-Data": t.initData,
+          "ngrok-skip-browser-warning": "1"
+        },
+        body: body ? JSON.stringify(body) : null
+      });
+
+      const ct = (res.headers.get("content-type")||"").toLowerCase();
+      if (!ct.includes("application/json")) {
+        const text = await res.text().catch(()=> "");
+        if (text.includes("ERR_NGROK_6024") || text.includes("ngrok")) {
+          throw new Error("ngrok يمنع الوصول (ERR_NGROK_6024).");
+        }
+        throw new Error("الـ API رجّع HTML بدل JSON. تأكد من API_BASE.");
+      }
+
+      const data = await res.json().catch(()=>null);
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "Blocked"));
+      }
+      if (!res.ok) {
+        throw new Error(`${res.status}: ` + (data && data.detail ? data.detail : JSON.stringify(data)));
+      }
+      return data;
+    }
+
     async function copy(text){
       try{
         await navigator.clipboard.writeText(text);
@@ -347,27 +399,71 @@
       backdrop.style.display = "none";
       sheetBody.innerHTML = "";
     }
-    document.getElementById("close").onclick = closeSheet;
+    document.getElementById("closeSheet").onclick = closeSheet;
     backdrop.addEventListener("click", (e)=>{ if(e.target === backdrop) closeSheet(); });
+
+    function fmtTime(ts){
+      try { return new Date(ts*1000).toLocaleString("ar"); }
+      catch { return String(ts); }
+    }
 
     function render(){
       pointsEl.textContent = state.points;
       rateEl.textContent = String(state.rate);
     }
 
+    function renderHistory(items){
+      if (!items || items.length === 0){
+        historyEl.innerHTML = `<div class="item"><div class="meta"><b>لا يوجد عمليات بعد</b><small>ستظهر هنا التحويلات بعد الإرسال/الاستلام</small></div></div>`;
+        return;
+      }
+
+      historyEl.innerHTML = items.map(t => {
+        const isOut = t.from_uid === state.user_id;
+        const title = isOut ? "إرسال نقاط" : "استلام نقاط";
+        const sub = isOut ? `إلى UID: ${t.to_uid}` : `من UID: ${t.from_uid}`;
+        const amtCls = isOut ? "out" : "in";
+        const sign = isOut ? "-" : "+";
+        const badge = isOut
+          ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-8 18-2-7-8-3z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21V11m0 0l4 4m-4-4l-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7h16" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+        return `
+          <div class="item">
+            <div class="left">
+              <div class="badge">${badge}</div>
+              <div class="meta">
+                <b>${title}</b>
+                <small>${sub} • ${fmtTime(t.ts)}</small>
+              </div>
+            </div>
+            <div class="amt ${amtCls}">${sign}${t.amount}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadHistory(){
+      const h = await apiFetch("/api/history");
+      renderHistory(h.items || []);
+    }
+
     async function openWallet(){
-      setStatus("جاري التحميل…");
       const boot = await apiFetch("/api/bootstrap");
+      state.user_id = Number(boot.user_id || 0);
       state.points = Number(boot.points || 0);
       state.rate = Number(boot.point_price_ton || 0);
       state.ton_address = boot.ton_address || "";
       render();
-      setStatus(boot);
+
+      // سجلات مرة عند فتح المحفظة (ليس زر تحديث)
+      await loadHistory();
 
       gate.style.display = "none";
       wallet.style.display = "grid";
     }
 
+    // Actions
     document.getElementById("add").onclick = async ()=>{
       try{
         const r = await apiFetch("/api/add/request", {method:"POST"});
@@ -377,26 +473,21 @@
             <div>
               <div class="hint">عنوان محفظة TON</div>
               <input class="field" readonly value="${r.ton_address}">
-              <div class="btnRow">
-                <button class="btn primary" id="c1">نسخ العنوان</button>
-              </div>
+              <div class="btnRow"><button class="btn primary" id="c1">نسخ العنوان</button></div>
               <div class="hint" style="margin-top:10px">ضع الكود في خانة Comment/Message عند التحويل.</div>
             </div>
             <div>
               <div class="hint">كود التعليق الخاص بك</div>
               <input class="field" readonly value="${r.deposit_code}">
-              <div class="btnRow">
-                <button class="btn primary" id="c2">نسخ الكود</button>
-              </div>
+              <div class="btnRow"><button class="btn primary" id="c2">نسخ الكود</button></div>
               <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
             </div>
           </div>
         `);
         document.getElementById("c1").onclick = ()=> copy(r.ton_address);
         document.getElementById("c2").onclick = ()=> copy(r.deposit_code);
-        setStatus(r);
       }catch(e){
-        setStatus(String(e.message||e));
+        openSheet("خطأ", `<div class="msg">${String(e.message||e)}</div>`);
       }
     };
 
@@ -408,16 +499,13 @@
           <div>
             <div class="hint">أرسل هذا الكود للمُرسل (يُستخدم مرة واحدة)</div>
             <input class="field" readonly value="${r.receive_code}">
-            <div class="btnRow">
-              <button class="btn good" id="cr">نسخ كود الاستلام</button>
-            </div>
+            <div class="btnRow"><button class="btn good" id="cr">نسخ كود الاستلام</button></div>
             <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
           </div>
         `);
         document.getElementById("cr").onclick = ()=> copy(r.receive_code);
-        setStatus(r);
       }catch(e){
-        setStatus(String(e.message||e));
+        openSheet("خطأ", `<div class="msg">${String(e.message||e)}</div>`);
       }
     };
 
@@ -454,35 +542,40 @@
 
           out.textContent = "جاري الإرسال…";
           const r = await apiFetch("/api/send", {method:"POST", body:{recipient, amount}});
-          out.textContent = JSON.stringify(r, null, 2);
+          out.textContent = "تم ✅";
 
-          // ✅ تحديث تلقائي فقط بعد الإرسال
+          // ✅ التحديث التلقائي للرصيد فقط بعد الإرسال
           state.points = Number(r.your_points);
           render();
-          setStatus(r);
+
+          // ✅ تحديث السجلات بعد الإرسال
+          await loadHistory();
+
         }catch(e){
           out.textContent = String(e.message||e);
         }
       };
     };
 
+    // Close app
+    document.getElementById("closeApp").onclick = ()=>{
+      const t = tg();
+      if (t) t.close();
+      else window.close();
+    };
+
+    // Init
     (function init(){
       const t = tg();
       if (!t){
-        env.textContent = "متصفح عادي";
-        dot.classList.remove("ok");
         document.getElementById("open").disabled = true;
         showGateErr("لا يمكن فتحها خارج Telegram WebApp.");
         return;
       }
       t.ready(); t.expand();
-      if (t.initData && t.initData.length > 0){
-        env.textContent = "Telegram ✅";
-        dot.classList.add("ok");
-      } else {
-        env.textContent = "initData فارغ";
+      if (!t.initData || t.initData.length === 0){
         document.getElementById("open").disabled = true;
-        showGateErr("افتح الصفحة من زر web_app داخل البوت (ليس كرابط مباشر).");
+        showGateErr("افتح الصفحة من زر web_app داخل البوت (ليس كرابط).");
       }
     })();
 
