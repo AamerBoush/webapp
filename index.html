@@ -412,6 +412,18 @@
       rateEl.textContent = String(state.rate);
     }
 
+
+
+
+    function escapeHtml(s){
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     function renderHistory(items){
       if (!items || items.length === 0){
         historyEl.innerHTML = `<div class="item"><div class="meta"><b>لا يوجد عمليات بعد</b><small>ستظهر هنا التحويلات بعد الإرسال/الاستلام</small></div></div>`;
@@ -472,18 +484,21 @@
 
     async function openWallet(){
       const boot = await apiFetch("/api/bootstrap");
+    
       state.user_id = Number(boot.user_id || 0);
-      state.points = Number(boot.points || 0);
-      state.rate = Number(boot.point_price_ton || 0);
+      state.points  = Math.max(0, Number(boot.points || 0));
+      state.rate    = Number(boot.point_price_ton || 0);
       state.ton_address = boot.ton_address || "";
       render();
-
-      // سجلات مرة عند فتح المحفظة (ليس زر تحديث)
-      await loadHistory();
-
+    
+      // ✅ افتح الواجهة أولًا
       gate.style.display = "none";
       wallet.style.display = "grid";
+    
+      // ✅ حمّل السجلات بدون ما توقف فتح المحفظة
+      loadHistory().catch(() => renderHistory([]));
     }
+
 
     // Actions
     document.getElementById("add").onclick = async ()=>{
