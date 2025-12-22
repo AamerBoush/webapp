@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>Telegram Secure App</title>
+  <title>Telegram Hash Login</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -15,30 +15,47 @@
 Telegram.WebApp.ready();
 
 const API_URL = "https://insipidly-transdesert-noble.ngrok-free.dev";
+let sessionToken = null;
 
-const btn = document.getElementById("btn");
-const countEl = document.getElementById("count");
-
-const queryId = Telegram.WebApp.initDataUnsafe.query_id;
-const userId  = Telegram.WebApp.initDataUnsafe.user.id;
-
-btn.onclick = async () => {
-  const res = await fetch(API_URL + "/click", {
+// --------- LOGIN (مرة واحدة) ----------
+async function login() {
+  const res = await fetch(API_URL + "/login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      query_id: queryId,
-      user_id: userId
+      initData: Telegram.WebApp.initData
     })
   });
 
   const data = await res.json();
+  if (!data.ok) {
+    alert("فشل تسجيل الدخول");
+    return false;
+  }
+
+  sessionToken = data.session_token;
+  return true;
+}
+
+// --------- CLICK ----------
+document.getElementById("btn").onclick = async () => {
+  if (!sessionToken) {
+    const ok = await login();
+    if (!ok) return;
+  }
+
+  const res = await fetch(API_URL + "/click", {
+    method: "POST",
+    headers: {
+      "X-Session-Token": sessionToken
+    }
+  });
+
+  const data = await res.json();
   if (data.ok) {
-    countEl.innerText = data.count;
+    document.getElementById("count").innerText = data.count;
   } else {
-    alert("تم رفض الطلب");
+    alert("غير مصرح");
   }
 };
 </script>
