@@ -284,33 +284,52 @@
       gateErr.textContent = msg;
     }
 
-    async function apiFetch(path, {method="GET", body=null} = {}){
-      if (!canCallApi()) throw new Error("initData غير موجود. افتحها من زر web_app داخل البوت.");
-      const t = tg();
 
-      // ✅ no-cache نهائيًا
-      const url = joinUrl(API_BASE, path) + (path.includes("?") ? "&" : "?") + "t=" + Date.now();
-
-      const res = await fetch(url, {
-        method,
-        cache: "no-store",
-        headers: {
-          "Content-Type":"application/json",
-          "X-Telegram-Init-Data": t.initData
-        },
-        body: body ? JSON.stringify(body) : null
-      });
-
-      const ct = (res.headers.get("content-type")||"");
-      const data = ct.includes("application/json") ? await res.json().catch(()=>null) : await res.text().catch(()=>null);
-
-      if (res.status === 401 || res.status === 403) {
-        throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "blocked"));
+    async function apiFetch(path, { method="GET", body=null } = {}) {
+        const t = tg();
+        if (!t || !t.initData || t.initData.length === 0) {
+          throw new Error("initData غير موجود. افتح الويب آب من داخل Telegram عبر زر web_app.");
+        }
+      
+        // ✅ no-cache + bypass ngrok warning
+        const url = joinUrl(API_BASE, path) + (path.includes("?") ? "&" : "?") + "t=" + Date.now();
+      
+        const res = await fetch(url, {
+          method,
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Telegram-Init-Data": t.initData,
+      
+            // ✅ هذا يحل ERR_NGROK_6024
+            "ngrok-skip-browser-warning": "1"
+          },
+          body: body ? JSON.stringify(body) : null
+        });
+      
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+      
+        // ✅ لو رجع HTML (تحذير ngrok / API_BASE غلط) نوقف فورًا ونوضح السبب
+        if (!ct.includes("application/json")) {
+          const text = await res.text().catch(() => "");
+          if (text.includes("ERR_NGROK_6024") || text.includes("ngrok")) {
+            throw new Error("ngrok يمنع الوصول (ERR_NGROK_6024). تم حلّه بإضافة ngrok-skip-browser-warning لكن تأكد أن CORS يسمح به.");
+          }
+          throw new Error("الـ API رجّع HTML بدل JSON. تأكد أن API_BASE صحيح ويشير لـ FastAPI وليس صفحة أخرى.");
+        }
+      
+        const data = await res.json().catch(() => null);
+      
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "Blocked"));
+        }
+        if (!res.ok) {
+          throw new Error(`${res.status}: ` + (data && data.detail ? data.detail : JSON.stringify(data)));
+        }
+      
+        return data;
       }
-      if (!res.ok) throw new Error(`${res.status}: ` + (typeof data === "string" ? data : JSON.stringify(data)));
-      return data;
-    }
-
+      
     async function copy(text){
       try{
         await navigator.clipboard.writeText(text);
