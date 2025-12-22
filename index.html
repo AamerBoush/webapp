@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>DeFi Wallet</title>
-
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -64,7 +63,6 @@
     .dot{width:8px;height:8px;border-radius:99px;background:#ff3b30}
     .dot.ok{background:var(--green)}
 
-    /* Gate */
     .gate{min-height:72vh;display:grid;place-items:center}
     .gateInner{width:min(560px,100%); padding:18px}
     .eyeBtn{
@@ -83,7 +81,6 @@
     .hint{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.6}
     .err{margin-top:12px;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.85);font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:12px;display:none}
 
-    /* Wallet */
     .wallet{display:none;gap:14px}
     .pad{padding:18px}
     .balanceWrap{display:grid;place-items:center;text-align:center}
@@ -109,7 +106,6 @@
     .action b{font-weight:950;font-size:13px}
     .action small{color:var(--muted);margin-top:-6px}
 
-    /* Sheet */
     .backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.55);
       display:none;align-items:flex-end;justify-content:center;
@@ -179,23 +175,20 @@
       <div class="pill"><span id="dot" class="dot"></span><span id="env">تحقق…</span></div>
     </div>
 
-    <!-- Gate -->
     <div id="gate" class="gate">
       <div class="card gateInner">
         <button id="open" class="eyeBtn">
-          <!-- closed-eye icon -->
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="white" stroke-width="2" opacity=".55"/>
             <path d="M4 4l16 16" stroke="white" stroke-width="2" stroke-linecap="round"/>
           </svg>
           فتح المحفظة
         </button>
-        <div class="hint">لن يعمل التطبيق خارج Telegram WebApp. افتحه من زر <b>web_app</b> داخل البوت.</div>
+        <div class="hint">لن يعمل خارج Telegram WebApp. افتحه من زر <b>web_app</b> داخل البوت.</div>
         <div id="gateErr" class="err"></div>
       </div>
     </div>
 
-    <!-- Wallet -->
     <div id="wallet" class="wallet">
       <div class="card pad">
         <div class="balanceWrap">
@@ -243,7 +236,6 @@
     </div>
   </div>
 
-  <!-- Sheet -->
   <div id="backdrop" class="backdrop">
     <div class="sheet">
       <div class="head">
@@ -255,8 +247,7 @@
   </div>
 
   <script>
-    // ✅ ضع رابط الباك إند هنا
-    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها
+    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها لدومين الباك
 
     const dot = document.getElementById("dot");
     const env = document.getElementById("env");
@@ -296,16 +287,23 @@
     async function apiFetch(path, {method="GET", body=null} = {}){
       if (!canCallApi()) throw new Error("initData غير موجود. افتحها من زر web_app داخل البوت.");
       const t = tg();
-      const res = await fetch(joinUrl(API_BASE, path), {
+
+      // ✅ no-cache نهائيًا
+      const url = joinUrl(API_BASE, path) + (path.includes("?") ? "&" : "?") + "t=" + Date.now();
+
+      const res = await fetch(url, {
         method,
+        cache: "no-store",
         headers: {
           "Content-Type":"application/json",
           "X-Telegram-Init-Data": t.initData
         },
         body: body ? JSON.stringify(body) : null
       });
+
       const ct = (res.headers.get("content-type")||"");
       const data = ct.includes("application/json") ? await res.json().catch(()=>null) : await res.text().catch(()=>null);
+
       if (res.status === 401 || res.status === 403) {
         throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "blocked"));
       }
@@ -339,19 +337,18 @@
     }
 
     async function openWallet(){
-      setStatus("…");
+      setStatus("جاري التحميل…");
       const boot = await apiFetch("/api/bootstrap");
       state.points = Number(boot.points || 0);
       state.rate = Number(boot.point_price_ton || 0);
       state.ton_address = boot.ton_address || "";
       render();
-      setStatus({ ok:true, points: state.points });
+      setStatus(boot);
 
       gate.style.display = "none";
       wallet.style.display = "grid";
     }
 
-    // Actions
     document.getElementById("add").onclick = async ()=>{
       try{
         const r = await apiFetch("/api/add/request", {method:"POST"});
@@ -378,6 +375,7 @@
         `);
         document.getElementById("c1").onclick = ()=> copy(r.ton_address);
         document.getElementById("c2").onclick = ()=> copy(r.deposit_code);
+        setStatus(r);
       }catch(e){
         setStatus(String(e.message||e));
       }
@@ -398,6 +396,7 @@
           </div>
         `);
         document.getElementById("cr").onclick = ()=> copy(r.receive_code);
+        setStatus(r);
       }catch(e){
         setStatus(String(e.message||e));
       }
@@ -438,17 +437,16 @@
           const r = await apiFetch("/api/send", {method:"POST", body:{recipient, amount}});
           out.textContent = JSON.stringify(r, null, 2);
 
-          // ✅ تحديث تلقائي فقط بعد الإرسال (بدون زر)
+          // ✅ تحديث تلقائي فقط بعد الإرسال
           state.points = Number(r.your_points);
           render();
-          setStatus({ ok:true, points: state.points, last_tx: r.tx_id });
+          setStatus(r);
         }catch(e){
           out.textContent = String(e.message||e);
         }
       };
     };
 
-    // Init
     (function init(){
       const t = tg();
       if (!t){
