@@ -3,55 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wallet</title>
+  <title>DeFi Wallet</title>
 
-  <!-- Telegram WebApp -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- (اختياري) QR generator - إذا فشل ما يوقف التطبيق -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <style>
     :root{
-      --bg0:#070a12;
-      --bg1:#0b1021;
+      --bg0:#070a12; --bg1:#0b1021;
       --card:rgba(255,255,255,.06);
-      --card2:rgba(255,255,255,.08);
       --stroke:rgba(255,255,255,.10);
       --text:#eef2ff;
-      --muted:rgba(238,242,255,.65);
-      --muted2:rgba(238,242,255,.45);
-      --blue:#2b6cff;
+      --muted:rgba(238,242,255,.62);
       --green:#4cd964;
-      --red:#ff3b30;
-      --yellow:#ffcc00;
-      --shadow: 0 24px 80px rgba(0,0,0,.45);
-      --r16:16px;
-      --r20:20px;
-      --r24:24px;
+      --blue:#2b6cff;
+      --shadow: 0 24px 90px rgba(0,0,0,.50);
+      --r:22px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      margin:0; min-height:100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color:var(--text);
       background:
-        radial-gradient(900px 550px at 15% 10%, rgba(43,108,255,.22), transparent 60%),
-        radial-gradient(700px 500px at 85% 18%, rgba(76,217,100,.14), transparent 60%),
-        radial-gradient(800px 480px at 45% 95%, rgba(255,204,0,.10), transparent 58%),
+        radial-gradient(900px 520px at 18% 10%, rgba(43,108,255,.22), transparent 60%),
+        radial-gradient(700px 520px at 85% 20%, rgba(76,217,100,.14), transparent 60%),
+        radial-gradient(800px 520px at 50% 95%, rgba(255,204,0,.10), transparent 58%),
         linear-gradient(180deg, var(--bg0), var(--bg1));
-      overflow-x:hidden;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:16px 14px 90px}
-    .safe{padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: env(safe-area-inset-bottom);}
-
-    /* Top bar */
-    .topbar{
+    .wrap{max-width:980px;margin:0 auto;padding:16px 14px 30px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--stroke);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .top{
       display:flex;align-items:center;justify-content:space-between;gap:12px;
       padding:10px 2px 14px;
     }
-    .brand{display:flex;align-items:center;gap:10px;}
+    .brand{display:flex;align-items:center;gap:10px}
     .orb{
       width:42px;height:42px;border-radius:16px;
       background:
@@ -60,8 +51,8 @@
       border:1px solid var(--stroke);
       box-shadow: 0 18px 55px rgba(43,108,255,.20);
     }
-    .brand h1{font-size:14px;margin:0;letter-spacing:.2px}
-    .brand .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .brand b{display:block;font-weight:950}
+    .brand small{color:var(--muted)}
     .pill{
       display:inline-flex;align-items:center;gap:8px;
       padding:8px 10px;border-radius:999px;
@@ -69,519 +60,257 @@
       border:1px solid var(--stroke);
       color:var(--muted);
       font-size:12px;
-      backdrop-filter: blur(10px);
     }
-    .dot{width:8px;height:8px;border-radius:99px;background:var(--yellow)}
+    .dot{width:8px;height:8px;border-radius:99px;background:#ff3b30}
     .dot.ok{background:var(--green)}
-    .dot.bad{background:var(--red)}
 
-    /* Cards */
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
-      border:1px solid var(--stroke);
-      border-radius:var(--r24);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-    .cardPad{padding:16px}
-
-    /* Gate (connect) */
-    .gate{
-      min-height:66vh;
-      display:grid;place-items:center;
-    }
-    .connect{
-      width:min(560px, 100%);
-      padding:18px;
-      border-radius:24px;
-      border:1px solid rgba(255,255,255,.14);
-      background:
-        radial-gradient(900px 400px at 50% 0%, rgba(43,108,255,.22), transparent 60%),
-        rgba(255,255,255,.06);
-      box-shadow: 0 26px 90px rgba(0,0,0,.50);
-    }
-    .connectTitle{font-weight:900;margin:0 0 8px;font-size:18px}
-    .connectSub{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.6}
-    .cta{
+    /* Gate */
+    .gate{min-height:72vh;display:grid;place-items:center}
+    .gateInner{width:min(560px,100%); padding:18px}
+    .eyeBtn{
       width:100%;
-      padding:16px 14px;
-      border-radius:18px;
+      padding:18px 14px;
+      border-radius:20px;
       border:1px solid rgba(255,255,255,.16);
       background: linear-gradient(135deg, rgba(43,108,255,.95), rgba(43,108,255,.55));
       color:#fff;
-      font-weight:900;
+      font-weight:950;
       cursor:pointer;
-      font-size:15px;
+      display:flex;align-items:center;justify-content:center;gap:10px;
       box-shadow: 0 22px 70px rgba(43,108,255,.22);
     }
-    .cta:active{transform: translateY(1px);}
-    .hintSmall{margin-top:10px;color:var(--muted2);font-size:12px}
+    .eyeBtn:disabled{opacity:.45;cursor:not-allowed}
+    .hint{margin-top:12px;color:var(--muted);font-size:12px;line-height:1.6}
+    .err{margin-top:12px;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.85);font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:12px;display:none}
 
-    /* Wallet screen */
-    .grid{display:grid;gap:14px}
-    .balanceCard{
-      position:relative;
-      overflow:hidden;
-    }
-    .balanceCard::before{
-      content:"";
-      position:absolute;inset:-80px -120px auto auto;
-      width:240px;height:240px;border-radius:999px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.25), transparent 60%),
-                  radial-gradient(circle at 60% 60%, rgba(43,108,255,.35), transparent 60%);
-      filter: blur(2px);
-      opacity:.9;
-      transform: rotate(10deg);
-    }
-    .balanceInner{position:relative; padding:18px;}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .label{color:var(--muted);font-size:12px}
-    .big{
-      font-size:40px;
-      font-weight:950;
-      letter-spacing:.5px;
-      line-height:1;
-    }
-    .subrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
-    .mini{
-      padding:8px 10px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(0,0,0,.18);
-      color: var(--muted);
-      font-size:12px;
-      display:inline-flex;gap:8px;align-items:center;
-    }
-    .mini b{color:rgba(238,242,255,.92)}
-    .btnIcon{
-      width:44px;height:44px;border-radius:16px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,.06);
-      display:grid;place-items:center;
-      cursor:pointer;
-    }
-    .btnIcon:active{transform:translateY(1px)}
-    .btnIcon svg{width:20px;height:20px;opacity:.95}
+    /* Wallet */
+    .wallet{display:none;gap:14px}
+    .pad{padding:18px}
+    .balanceWrap{display:grid;place-items:center;text-align:center}
+    .balanceLabel{color:var(--muted);font-size:12px}
+    .balanceNum{font-size:46px;font-weight:1000;letter-spacing:.4px;color:var(--green);margin:6px 0 6px}
+    .rateLine{color:var(--muted);font-size:12px}
 
-    /* Actions */
-    .actions{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:10px;
-      margin-top:14px;
-    }
+    .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
     .action{
       border-radius:20px;
-      border:1px solid var(--stroke);
+      border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.05);
       padding:14px 12px;
       cursor:pointer;
       display:flex;flex-direction:column;align-items:center;gap:10px;
-      transition: transform .08s ease;
-      position:relative;
-      overflow:hidden;
     }
-    .action:active{transform:translateY(1px)}
-    .action .ic{
+    .ic{
       width:46px;height:46px;border-radius:18px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.18);
       display:grid;place-items:center;
     }
-    .action .ic svg{width:22px;height:22px}
-    .action span{font-weight:900;font-size:13px}
+    .action b{font-weight:950;font-size:13px}
     .action small{color:var(--muted);margin-top:-6px}
 
-    /* Tokens list */
-    .sectionTitle{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 16px 0;
-      color:rgba(238,242,255,.9);
-      font-weight:900;
-      font-size:13px;
-    }
-    .list{padding:12px 12px 14px}
-    .item{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:12px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      margin-top:10px;
-    }
-    .itemL{display:flex;align-items:center;gap:10px}
-    .tokenIcon{
-      width:40px;height:40px;border-radius:16px;
-      background: linear-gradient(135deg, rgba(255,204,0,.85), rgba(43,108,255,.55));
-      border:1px solid rgba(255,255,255,.14);
-      display:grid;place-items:center;
-      box-shadow: 0 12px 40px rgba(255,204,0,.10);
-    }
-    .tokenIcon svg{width:18px;height:18px}
-    .item .name{font-weight:950;font-size:13px}
-    .item .sym{color:var(--muted);font-size:12px;margin-top:2px}
-    .right{text-align:left}
-    .right .amt{font-weight:950}
-    .right .fiat{color:var(--muted);font-size:12px;margin-top:2px}
-
-    /* Activity */
-    .activityWrap{padding:12px 12px 16px}
-    .tx{
-      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-      padding:12px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.16);
-      margin-top:10px;
-    }
-    .txL{display:flex;gap:10px;align-items:flex-start}
-    .badge{
-      width:38px;height:38px;border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      display:grid;place-items:center;
-    }
-    .badge.send{background: rgba(255,59,48,.10); border-color: rgba(255,59,48,.20)}
-    .badge.recv{background: rgba(76,217,100,.10); border-color: rgba(76,217,100,.20)}
-    .badge.code{background: rgba(43,108,255,.10); border-color: rgba(43,108,255,.20)}
-    .txTitle{font-weight:950;font-size:13px}
-    .txMeta{color:var(--muted);font-size:12px;margin-top:2px;line-height:1.45}
-    .txR{text-align:left}
-    .txAmt{font-weight:950}
-    .txTime{color:var(--muted);font-size:12px;margin-top:2px}
-
-    /* Bottom nav */
-    .nav{
-      position:fixed;left:0;right:0;bottom:0;
-      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-      background: linear-gradient(180deg, transparent, rgba(7,10,18,.85) 25%, rgba(7,10,18,.95));
-      backdrop-filter: blur(12px);
-      border-top:1px solid rgba(255,255,255,.08);
-    }
-    .navInner{
-      max-width:980px;margin:0 auto;
-      display:grid;grid-template-columns:repeat(3,1fr);
-      gap:10px;
-    }
-    .navBtn{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      border-radius:18px;
-      padding:10px 10px;
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      color:var(--muted);
-      cursor:pointer;
-      font-weight:900;
-      font-size:12px;
-    }
-    .navBtn.active{
-      color:rgba(255,255,255,.92);
-      border-color: rgba(43,108,255,.30);
-      background: rgba(43,108,255,.12);
-    }
-    .navBtn svg{width:18px;height:18px;opacity:.9}
-
-    /* Bottom Sheet */
-    .sheetBackdrop{
-      position:fixed;inset:0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:flex-end;
-      justify-content:center;
-      padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+    /* Sheet */
+    .backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);
+      display:none;align-items:flex-end;justify-content:center;
+      padding:14px 14px 22px;
     }
     .sheet{
       width:min(760px, 100%);
-      border-radius: 26px;
+      border-radius:26px;
       border:1px solid rgba(255,255,255,.12);
-      background: rgba(13,18,32,.94);
+      background: rgba(13,18,32,.95);
       box-shadow: 0 40px 120px rgba(0,0,0,.55);
       backdrop-filter: blur(14px);
       overflow:hidden;
     }
-    .sheetHead{
+    .head{
       display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:14px 14px 10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.08);
     }
-    .sheetTitle{font-weight:950}
-    .sheetClose{
+    .title{font-weight:1000}
+    .close{
       border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.06);
       color:rgba(255,255,255,.9);
       border-radius:16px;
       padding:10px 12px;
       cursor:pointer;
-      font-weight:900;
+      font-weight:950;
       font-size:12px;
     }
-    .sheetBody{padding:14px}
+    .body{padding:14px}
     .field{
       width:100%;
-      padding:12px 12px;
-      border-radius:16px;
+      padding:12px 12px;border-radius:16px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.20);
       color: rgba(255,255,255,.92);
-      outline:none;
-      font-size:14px;
+      outline:none;font-size:14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .grid2{display:grid;gap:10px;grid-template-columns:1fr}
     @media(min-width:720px){ .grid2{grid-template-columns:1fr 1fr} }
-    .hint{color:var(--muted);font-size:12px;line-height:1.6}
     .btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
     .btn{
-      padding:12px 12px;
-      border-radius:16px;
+      padding:12px 12px;border-radius:16px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.06);
       color: rgba(255,255,255,.92);
-      cursor:pointer;
-      font-weight:950;
-      font-size:13px;
+      cursor:pointer;font-weight:1000;font-size:13px;
     }
     .btn.primary{background: rgba(43,108,255,.20); border-color: rgba(43,108,255,.35)}
-    .btn.green{background: rgba(76,217,100,.16); border-color: rgba(76,217,100,.28)}
-    .btn.red{background: rgba(255,59,48,.12); border-color: rgba(255,59,48,.22)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
-    .sep{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
-    .qrBox{
-      border:1px dashed rgba(255,255,255,.16);
-      background: rgba(255,255,255,.04);
-      border-radius:18px;
-      padding:12px;
-      display:flex;align-items:center;justify-content:center;
-      min-height:160px;
-    }
-
-    /* Toast */
-    .toast{
-      position:fixed;left:50%;transform:translateX(-50%);
-      bottom: 90px;
-      background: rgba(0,0,0,.55);
-      border:1px solid rgba(255,255,255,.14);
-      color: rgba(255,255,255,.92);
-      padding:10px 12px;
-      border-radius:16px;
-      font-weight:900;
-      font-size:12px;
-      display:none;
-      backdrop-filter: blur(10px);
-    }
-
-    /* Small status */
-    .statusBox{
-      margin-top:12px;
-      padding:12px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.14);
-      color: rgba(238,242,255,.75);
-      font-size:12px;
-      line-height:1.6;
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
+    .btn.good{background: rgba(76,217,100,.16); border-color: rgba(76,217,100,.28)}
+    .msg{margin-top:12px;white-space:pre-wrap;word-break:break-word;color:rgba(255,255,255,.85);font-size:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:12px}
+    .maxLine{color:var(--muted);font-size:12px;margin-top:8px}
+    .maxLink{color:#9bb8ff;cursor:pointer;font-weight:950}
   </style>
 </head>
-
-<body class="safe">
+<body>
   <div class="wrap">
-    <div class="topbar">
+    <div class="top">
       <div class="brand">
         <div class="orb"></div>
         <div>
-          <h1>Wallet</h1>
-          <div class="sub">TON • Points</div>
+          <b>DeFi Wallet</b>
+          <small>TON • Points</small>
         </div>
       </div>
-      <div class="pill">
-        <span id="envDot" class="dot"></span>
-        <span id="envText">جاري التحقق…</span>
-      </div>
+      <div class="pill"><span id="dot" class="dot"></span><span id="env">تحقق…</span></div>
     </div>
 
-    <!-- Gate / Connect -->
+    <!-- Gate -->
     <div id="gate" class="gate">
-      <div class="connect card">
-        <div class="cardPad">
-          <p class="connectTitle">افتح محفظتك</p>
-          <p class="connectSub">
-            واجهة حديثة شبيهة بمحافظ Web3. يتم إرسال الطلبات للسيرفر فقط إذا كانت الصفحة داخل Telegram WebApp ومعها initData صالح.
-          </p>
-          <button id="btnOpen" class="cta">فتح المحفظة</button>
-          <div class="hintSmall">إذا ظهر “initData فارغ”، افتح الصفحة من زر <b>web_app</b> داخل البوت.</div>
-          <div id="gateStatus" class="statusBox" style="margin-top:12px; display:none;"></div>
-        </div>
+      <div class="card gateInner">
+        <button id="open" class="eyeBtn">
+          <!-- closed-eye icon -->
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="white" stroke-width="2" opacity=".55"/>
+            <path d="M4 4l16 16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          فتح المحفظة
+        </button>
+        <div class="hint">لن يعمل التطبيق خارج Telegram WebApp. افتحه من زر <b>web_app</b> داخل البوت.</div>
+        <div id="gateErr" class="err"></div>
       </div>
     </div>
 
     <!-- Wallet -->
-    <div id="wallet" class="grid" style="display:none;">
-      <div class="card balanceCard">
-        <div class="balanceInner">
-          <div class="row">
-            <div>
-              <div class="label">الرصيد</div>
-              <div class="big" id="pointsText">—</div>
-              <div class="subrow">
-                <div class="mini"><span>1 نقطة</span> <b id="rateText">—</b> <span>TON</span></div>
-                <div class="mini"><span>تقريبًا</span> <b id="approxTon">—</b> <span>TON</span></div>
-              </div>
+    <div id="wallet" class="wallet">
+      <div class="card pad">
+        <div class="balanceWrap">
+          <div class="balanceLabel">رصيدك</div>
+          <div id="points" class="balanceNum">—</div>
+          <div class="rateLine">سعر النقطة: <b id="rate">—</b> TON</div>
+        </div>
+
+        <div class="actions">
+          <div class="action" id="add">
+            <div class="ic">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3v10m0 0l-4-4m4 4l4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 17h16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </div>
-            <div class="row" style="justify-content:flex-start">
-              <button class="btnIcon" id="btnRefresh" title="تحديث">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 10-2.34 5.66" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M20 12v-6m0 6h-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="btnIcon" id="btnClose" title="إغلاق">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-              </button>
-            </div>
+            <b>إضافة نقاط</b>
+            <small>TON + Comment</small>
           </div>
 
-          <div class="actions">
-            <div class="action" id="actDeposit">
-              <div class="ic">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v10m0 0l-4-4m4 4l4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17h16" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-              </div>
-              <span>إيداع</span>
-              <small>TON + تعليق</small>
+          <div class="action" id="send">
+            <div class="ic">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M3 11l18-8-8 18-2-7-8-3z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-
-            <div class="action" id="actReceive">
-              <div class="ic">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 21V11m0 0l4 4m-4-4l-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7h16" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-              </div>
-              <span>استلام</span>
-              <small>كود مؤقت</small>
-            </div>
-
-            <div class="action" id="actSend">
-              <div class="ic">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-8 18-2-7-8-3z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </div>
-              <span>إرسال</span>
-              <small>نقاط</small>
-            </div>
+            <b>إرسال</b>
+            <small>Points</small>
           </div>
 
-          <div id="status" class="statusBox">—</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="sectionTitle">
-          <span>الأصول</span>
-          <span class="label">Tokens</span>
-        </div>
-        <div class="list">
-          <div class="item">
-            <div class="itemL">
-              <div class="tokenIcon">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
-              </div>
-              <div>
-                <div class="name">Points</div>
-                <div class="sym">POINT</div>
-              </div>
+          <div class="action" id="receive">
+            <div class="ic">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21V11m0 0l4 4m-4-4l-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 7h16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </div>
-            <div class="right">
-              <div class="amt" id="tokenPoints">—</div>
-              <div class="fiat" id="tokenTon">— TON</div>
-            </div>
+            <b>استلام</b>
+            <small>Code</small>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="sectionTitle">
-          <span>النشاط</span>
-          <button class="btn" id="btnHistory">تحديث السجل</button>
-        </div>
-        <div class="activityWrap" id="activityList">
-          <div class="label">لا يوجد بيانات بعد.</div>
-        </div>
+        <div id="status" class="msg">—</div>
       </div>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <div class="nav">
-    <div class="navInner">
-      <button class="navBtn active" id="navWallet">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="white" stroke-width="2"/><path d="M16 12h5" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M16 10a2 2 0 100 4" stroke="white" stroke-width="2"/></svg>
-        المحفظة
-      </button>
-      <button class="navBtn" id="navActivity">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M20 19V5" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M8 15l3-6 3 4 2-3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        النشاط
-      </button>
-      <button class="navBtn" id="navInfo">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 22a10 10 0 110-20 10 10 0 010 20z" stroke="white" stroke-width="2"/><path d="M12 10v6" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M12 7h.01" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-        معلومات
-      </button>
     </div>
   </div>
 
   <!-- Sheet -->
-  <div class="sheetBackdrop" id="sheetBackdrop">
-    <div class="sheet" role="dialog" aria-modal="true">
-      <div class="sheetHead">
-        <div class="sheetTitle" id="sheetTitle">—</div>
-        <button class="sheetClose" id="sheetClose">إغلاق</button>
+  <div id="backdrop" class="backdrop">
+    <div class="sheet">
+      <div class="head">
+        <div id="sheetTitle" class="title">—</div>
+        <button id="close" class="close">إغلاق</button>
       </div>
-      <div class="sheetBody" id="sheetBody"></div>
+      <div id="sheetBody" class="body"></div>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
-
   <script>
-    // =========================
-    // ✅ ضع رابط API هنا
-    // =========================
-    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها إلى دومين الـ API الحقيقي
+    // ✅ ضع رابط الباك إند هنا
+    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // <-- غيّرها
 
-    // DOM
-    const envDot = document.getElementById("envDot");
-    const envText = document.getElementById("envText");
+    const dot = document.getElementById("dot");
+    const env = document.getElementById("env");
+
     const gate = document.getElementById("gate");
     const wallet = document.getElementById("wallet");
-    const gateStatus = document.getElementById("gateStatus");
+    const gateErr = document.getElementById("gateErr");
 
-    const pointsText = document.getElementById("pointsText");
-    const rateText = document.getElementById("rateText");
-    const approxTon = document.getElementById("approxTon");
-    const tokenPoints = document.getElementById("tokenPoints");
-    const tokenTon = document.getElementById("tokenTon");
-    const statusBox = document.getElementById("status");
+    const pointsEl = document.getElementById("points");
+    const rateEl = document.getElementById("rate");
+    const statusEl = document.getElementById("status");
 
-    const activityList = document.getElementById("activityList");
-
-    const sheetBackdrop = document.getElementById("sheetBackdrop");
+    const backdrop = document.getElementById("backdrop");
     const sheetTitle = document.getElementById("sheetTitle");
     const sheetBody = document.getElementById("sheetBody");
-    const sheetClose = document.getElementById("sheetClose");
 
-    const toast = document.getElementById("toast");
+    let state = { points: 0, rate: 0, ton_address: "" };
 
-    // Telegram
     function tg(){ return (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null; }
     function canCallApi(){
       const t = tg();
       return !!t && typeof t.initData === "string" && t.initData.length > 0;
     }
-
     function joinUrl(base, path){
-      if (base.endsWith("/") && path.startsWith("/")) return base.slice(0,-1) + path;
-      if (!base.endsWith("/") && !path.startsWith("/")) return base + "/" + path;
-      return base + path;
+      if (base.endsWith("/") && path.startsWith("/")) return base.slice(0,-1)+path;
+      if (!base.endsWith("/") && !path.startsWith("/")) return base+"/"+path;
+      return base+path;
+    }
+    function setStatus(x){
+      statusEl.textContent = (typeof x === "string") ? x : JSON.stringify(x, null, 2);
+    }
+    function showGateErr(msg){
+      gateErr.style.display = "block";
+      gateErr.textContent = msg;
     }
 
-    function showToast(msg){
-      toast.textContent = msg;
-      toast.style.display = "block";
-      setTimeout(()=> toast.style.display="none", 1500);
+    async function apiFetch(path, {method="GET", body=null} = {}){
+      if (!canCallApi()) throw new Error("initData غير موجود. افتحها من زر web_app داخل البوت.");
+      const t = tg();
+      const res = await fetch(joinUrl(API_BASE, path), {
+        method,
+        headers: {
+          "Content-Type":"application/json",
+          "X-Telegram-Init-Data": t.initData
+        },
+        body: body ? JSON.stringify(body) : null
+      });
+      const ct = (res.headers.get("content-type")||"");
+      const data = ct.includes("application/json") ? await res.json().catch(()=>null) : await res.text().catch(()=>null);
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`${res.status}: ` + ((data && data.detail) ? data.detail : "blocked"));
+      }
+      if (!res.ok) throw new Error(`${res.status}: ` + (typeof data === "string" ? data : JSON.stringify(data)));
+      return data;
     }
 
     async function copy(text){
@@ -589,415 +318,161 @@
         await navigator.clipboard.writeText(text);
         const t = tg();
         if (t && t.HapticFeedback) t.HapticFeedback.impactOccurred("light");
-        showToast("تم النسخ");
-      }catch{
-        showToast("تعذر النسخ");
-      }
+      }catch{}
     }
 
-    function setStatus(msg){
-      statusBox.textContent = (typeof msg === "string") ? msg : JSON.stringify(msg, null, 2);
-    }
-    function setGateStatus(msg){
-      gateStatus.style.display = "block";
-      gateStatus.textContent = msg;
-    }
-
-    async function apiFetch(path, {method="GET", body=null} = {}){
-      if (!canCallApi()){
-        throw new Error("لن يتم إرسال طلب للسيرفر: initData غير موجود. افتح الصفحة من زر web_app داخل البوت.");
-      }
-      const t = tg();
-      const url = joinUrl(API_BASE, path);
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          "X-Telegram-Init-Data": t.initData
-        },
-        body: body ? JSON.stringify(body) : null
-      });
-
-      const ct = (res.headers.get("content-type") || "");
-      const data = ct.includes("application/json") ? await res.json().catch(()=>null) : await res.text().catch(()=>null);
-
-      if (res.status === 401) {
-        const detail = (data && data.detail) ? data.detail : "Unauthorized";
-        throw new Error("401: " + detail);
-      }
-      if (!res.ok) {
-        throw new Error(res.status + ": " + (typeof data === "string" ? data : JSON.stringify(data)));
-      }
-      return data;
-    }
-
-    // State
-    const state = {
-      points: 0,
-      rate: 0,
-      tonAddress: "",
-      userId: null
-    };
-
-    function fmtTime(ts){
-      try{
-        const d = new Date(ts * 1000);
-        return d.toLocaleString("ar", {hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit"});
-      }catch{ return ""; }
-    }
-
-    function renderBalance(){
-      pointsText.textContent = state.points ?? "—";
-      tokenPoints.textContent = state.points ?? "—";
-
-      const rate = Number(state.rate || 0);
-      rateText.textContent = rate ? String(rate) : "—";
-
-      const approx = rate ? (Number(state.points || 0) * rate) : 0;
-      approxTon.textContent = rate ? approx.toFixed(4) : "—";
-      tokenTon.textContent = rate ? approx.toFixed(4) + " TON" : "— TON";
-    }
-
-    function txTitle(tx){
-      if (!tx || !tx.type) return "عملية";
-      if (tx.type === "send") return "إرسال نقاط";
-      if (tx.type === "receive_code") return "إنشاء كود استلام";
-      if (tx.type === "deposit_code") return "إنشاء كود إيداع";
-      if (tx.type === "user_create") return "إنشاء حساب";
-      return tx.type;
-    }
-
-    function txBadgeClass(tx){
-      if (!tx) return "code";
-      if (tx.type === "send") return "send";
-      if (tx.type === "receive_code") return "recv";
-      return "code";
-    }
-
-    function txMeta(tx){
-      if (!tx) return "";
-      if (tx.type === "send"){
-        return `إلى: ${tx.to_uid}\nالكمية: ${tx.amount}`;
-      }
-      if (tx.type === "receive_code"){
-        return `الكود: ${tx.code || ""}`;
-      }
-      if (tx.type === "deposit_code"){
-        return `الكود: ${tx.code || ""}`;
-      }
-      return "";
-    }
-
-    function renderActivity(items){
-      if (!items || !items.length){
-        activityList.innerHTML = `<div class="label">لا يوجد نشاط بعد.</div>`;
-        return;
-      }
-      activityList.innerHTML = items.map(tx => {
-        const badge = txBadgeClass(tx);
-        const amount = tx.type === "send" ? `-${tx.amount}` : (tx.amount ? `+${tx.amount}` : "");
-        const when = fmtTime(tx.ts || tx.time || tx.created_at || (Date.now()/1000));
-        const title = txTitle(tx);
-        const meta = txMeta(tx);
-        return `
-          <div class="tx">
-            <div class="txL">
-              <div class="badge ${badge}">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2v20" stroke="white" stroke-width="2" stroke-linecap="round" opacity=".2"/>
-                  <path d="M7 12h10" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <div>
-                <div class="txTitle">${title}</div>
-                <div class="txMeta">${meta.replaceAll("\n","<br>")}</div>
-              </div>
-            </div>
-            <div class="txR">
-              <div class="txAmt">${amount || ""}</div>
-              <div class="txTime">${when}</div>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    async function loadAll(){
-      setStatus("جاري التحميل…");
-      const rate = await apiFetch("/api/rate");
-      state.rate = Number(rate.point_price_ton || 0);
-      state.tonAddress = rate.ton_address || "";
-
-      const me = await apiFetch("/api/me");
-      state.userId = me.user_id;
-      state.points = Number(me.points || 0);
-
-      renderBalance();
-      setStatus({ ok:true, user_id: state.userId, points: state.points, rate: state.rate });
-
-      await loadHistory();
-    }
-
-    async function loadHistory(){
-      try{
-        const h = await apiFetch("/api/history?limit=20");
-        renderActivity(h.items || []);
-      }catch(e){
-        // إذا ما عندك endpoint history، رح يطلع خطأ
-        // ما نخرب UI، بس نعرض رسالة
-        activityList.innerHTML = `<div class="label">تعذر جلب السجل: ${String(e.message||e)}</div>`;
-      }
-    }
-
-    // Sheets
     function openSheet(title, html){
       sheetTitle.textContent = title;
       sheetBody.innerHTML = html;
-      sheetBackdrop.style.display = "flex";
+      backdrop.style.display = "flex";
     }
     function closeSheet(){
-      sheetBackdrop.style.display = "none";
+      backdrop.style.display = "none";
       sheetBody.innerHTML = "";
     }
-    sheetClose.onclick = closeSheet;
-    sheetBackdrop.addEventListener("click", (e)=>{ if(e.target === sheetBackdrop) closeSheet(); });
+    document.getElementById("close").onclick = closeSheet;
+    backdrop.addEventListener("click", (e)=>{ if(e.target === backdrop) closeSheet(); });
 
-    async function showDeposit(){
-      const r = await apiFetch("/api/deposit/request", {method:"POST"});
-      const exp = fmtTime(r.expires_at);
-
-      openSheet("إيداع TON", `
-        <div class="grid2">
-          <div>
-            <div class="hint">عنوان محفظة TON</div>
-            <input class="field mono" readonly value="${r.ton_address || ""}">
-            <div class="btnRow">
-              <button class="btn primary" id="copyAddr">نسخ العنوان</button>
-            </div>
-
-            <div class="sep"></div>
-            <div class="hint">الكود المؤقت (ضعه في التعليق عند التحويل)</div>
-            <input class="field mono" readonly value="${r.deposit_code || ""}">
-            <div class="btnRow">
-              <button class="btn primary" id="copyDep">نسخ الكود</button>
-            </div>
-
-            <div class="sep"></div>
-            <div class="hint">ينتهي: <b>${exp}</b></div>
-          </div>
-
-          <div>
-            <div class="hint">QR (اختياري)</div>
-            <div class="qrBox" id="qrBoxDep">
-              <div class="hint">جاري إنشاء QR…</div>
-            </div>
-            <div class="hint" style="margin-top:10px">ملاحظة: أرسل إلى العنوان، ثم ضع الكود في خانة التعليق/الرسالة.</div>
-          </div>
-        </div>
-      `);
-
-      document.getElementById("copyAddr").onclick = ()=> copy(r.ton_address || "");
-      document.getElementById("copyDep").onclick  = ()=> copy(r.deposit_code || "");
-
-      // QR generation (address)
-      try{
-        const box = document.getElementById("qrBoxDep");
-        box.innerHTML = "";
-        if (window.QRCode) {
-          const canvas = document.createElement("canvas");
-          box.appendChild(canvas);
-          QRCode.toCanvas(canvas, String(r.ton_address || ""), {margin:1, width:220}, function(err){
-            if(err){ box.innerHTML = `<div class="hint">تعذر إنشاء QR</div>`; }
-          });
-        } else {
-          box.innerHTML = `<div class="hint">QR غير متوفر</div>`;
-        }
-      }catch{}
+    function render(){
+      pointsEl.textContent = state.points;
+      rateEl.textContent = String(state.rate);
     }
 
-    async function showReceive(){
-      const r = await apiFetch("/api/receive/code", {method:"POST"});
-      const exp = fmtTime(r.expires_at);
+    async function openWallet(){
+      setStatus("…");
+      const boot = await apiFetch("/api/bootstrap");
+      state.points = Number(boot.points || 0);
+      state.rate = Number(boot.point_price_ton || 0);
+      state.ton_address = boot.ton_address || "";
+      render();
+      setStatus({ ok:true, points: state.points });
 
-      openSheet("استلام نقاط", `
-        <div>
-          <div class="hint">أرسل هذا الكود للشخص الذي سيحوّل لك نقاط (يُستخدم مرة واحدة)</div>
-          <input class="field mono" readonly value="${r.receive_code || ""}">
-          <div class="btnRow">
-            <button class="btn green" id="copyRcv">نسخ كود الاستلام</button>
-          </div>
-          <div class="sep"></div>
-          <div class="hint">ينتهي: <b>${exp}</b></div>
-
-          <div class="sep"></div>
-          <div class="hint">QR (اختياري)</div>
-          <div class="qrBox" id="qrBoxRcv"><div class="hint">جاري إنشاء QR…</div></div>
-        </div>
-      `);
-
-      document.getElementById("copyRcv").onclick = ()=> copy(r.receive_code || "");
-
-      try{
-        const box = document.getElementById("qrBoxRcv");
-        box.innerHTML = "";
-        if (window.QRCode) {
-          const canvas = document.createElement("canvas");
-          box.appendChild(canvas);
-          QRCode.toCanvas(canvas, String(r.receive_code || ""), {margin:1, width:220}, function(err){
-            if(err){ box.innerHTML = `<div class="hint">تعذر إنشاء QR</div>`; }
-          });
-        } else {
-          box.innerHTML = `<div class="hint">QR غير متوفر</div>`;
-        }
-      }catch{}
+      gate.style.display = "none";
+      wallet.style.display = "grid";
     }
 
-    async function showSend(){
+    // Actions
+    document.getElementById("add").onclick = async ()=>{
+      try{
+        const r = await apiFetch("/api/add/request", {method:"POST"});
+        const exp = new Date(r.expires_at * 1000).toLocaleTimeString("ar");
+        openSheet("إضافة نقاط (TON)", `
+          <div class="grid2">
+            <div>
+              <div class="hint">عنوان محفظة TON</div>
+              <input class="field" readonly value="${r.ton_address}">
+              <div class="btnRow">
+                <button class="btn primary" id="c1">نسخ العنوان</button>
+              </div>
+              <div class="hint" style="margin-top:10px">ضع الكود في خانة Comment/Message عند التحويل.</div>
+            </div>
+            <div>
+              <div class="hint">كود التعليق الخاص بك</div>
+              <input class="field" readonly value="${r.deposit_code}">
+              <div class="btnRow">
+                <button class="btn primary" id="c2">نسخ الكود</button>
+              </div>
+              <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
+            </div>
+          </div>
+        `);
+        document.getElementById("c1").onclick = ()=> copy(r.ton_address);
+        document.getElementById("c2").onclick = ()=> copy(r.deposit_code);
+      }catch(e){
+        setStatus(String(e.message||e));
+      }
+    };
+
+    document.getElementById("receive").onclick = async ()=>{
+      try{
+        const r = await apiFetch("/api/receive/request", {method:"POST"});
+        const exp = new Date(r.expires_at * 1000).toLocaleTimeString("ar");
+        openSheet("استلام نقاط", `
+          <div>
+            <div class="hint">أرسل هذا الكود للمُرسل (يُستخدم مرة واحدة)</div>
+            <input class="field" readonly value="${r.receive_code}">
+            <div class="btnRow">
+              <button class="btn good" id="cr">نسخ كود الاستلام</button>
+            </div>
+            <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
+          </div>
+        `);
+        document.getElementById("cr").onclick = ()=> copy(r.receive_code);
+      }catch(e){
+        setStatus(String(e.message||e));
+      }
+    };
+
+    document.getElementById("send").onclick = async ()=>{
       openSheet("إرسال نقاط", `
-        <div class="grid2">
-          <div>
-            <div class="hint">الكمية (نقاط)</div>
-            <input class="field" id="sendAmount" type="number" min="1" inputmode="numeric" placeholder="مثال: 25">
+        <div>
+          <div class="hint">كود المستلم (RCV-XXXX)</div>
+          <input id="to" class="field" placeholder="RCV-XXXXXXXX">
+          <div class="hint" style="margin-top:10px">عدد النقاط</div>
+          <input id="amt" class="field" type="number" min="1" inputmode="numeric" placeholder="مثال: 25">
+          <div class="maxLine">Max <span class="maxLink" id="max">${state.points}</span></div>
+
+          <div class="btnRow">
+            <button class="btn primary" id="go">إرسال</button>
+            <button class="btn" id="cancel">إلغاء</button>
           </div>
-          <div>
-            <div class="hint">كود المستلم (RCV-xxxx)</div>
-            <input class="field mono" id="sendCode" type="text" placeholder="RCV-XXXXXXXX">
-          </div>
+
+          <div id="out" class="msg">—</div>
         </div>
-        <div class="btnRow">
-          <button class="btn primary" id="doSend">إرسال الآن</button>
-          <button class="btn" id="cancelSend">إلغاء</button>
-        </div>
-        <div class="statusBox" id="sendOut">—</div>
       `);
 
-      document.getElementById("cancelSend").onclick = closeSheet;
-      document.getElementById("doSend").onclick = async ()=>{
-        const out = document.getElementById("sendOut");
+      document.getElementById("cancel").onclick = closeSheet;
+      document.getElementById("max").onclick = ()=> { document.getElementById("amt").value = String(state.points); };
+
+      document.getElementById("go").onclick = async ()=>{
+        const out = document.getElementById("out");
         try{
-          const amount = parseInt(document.getElementById("sendAmount").value || "0", 10);
-          const recipient_code = (document.getElementById("sendCode").value || "").trim().toUpperCase();
+          const recipient = (document.getElementById("to").value || "").trim().toUpperCase();
+          const amount = parseInt(document.getElementById("amt").value || "0", 10);
+
+          if (!recipient.startsWith("RCV-")) throw new Error("كود المستلم غير صحيح");
+          if (amount <= 0) throw new Error("الكمية غير صحيحة");
+          if (amount > state.points) throw new Error("لا يوجد رصيد كافي");
 
           out.textContent = "جاري الإرسال…";
-          const r = await apiFetch("/api/send", {method:"POST", body:{amount, recipient_code}});
+          const r = await apiFetch("/api/send", {method:"POST", body:{recipient, amount}});
           out.textContent = JSON.stringify(r, null, 2);
 
-          // تحديث الرصيد والنشاط
-          const me = await apiFetch("/api/me");
-          state.points = Number(me.points || 0);
-          renderBalance();
-          await loadHistory();
-
-          showToast("تم الإرسال");
+          // ✅ تحديث تلقائي فقط بعد الإرسال (بدون زر)
+          state.points = Number(r.your_points);
+          render();
+          setStatus({ ok:true, points: state.points, last_tx: r.tx_id });
         }catch(e){
-          out.textContent = String(e.message || e);
+          out.textContent = String(e.message||e);
         }
       };
-    }
-
-    // Nav
-    const navWallet = document.getElementById("navWallet");
-    const navActivity = document.getElementById("navActivity");
-    const navInfo = document.getElementById("navInfo");
-
-    function setActiveNav(which){
-      [navWallet, navActivity, navInfo].forEach(b=>b.classList.remove("active"));
-      which.classList.add("active");
-      if (wallet.style.display !== "none") {
-        if (which === navActivity) {
-          // Scroll to activity
-          window.scrollTo({top: document.body.scrollHeight, behavior:"smooth"});
-        } else if (which === navWallet) {
-          window.scrollTo({top: 0, behavior:"smooth"});
-        } else {
-          openSheet("معلومات", `
-            <div class="hint">
-              • يتم إرسال الطلبات فقط إذا كانت الصفحة داخل Telegram WebApp ومعها initData.<br>
-              • لا تُسجّل بياناتك إلا بعد نجاح /api/me.<br>
-              • سعر النقطة مقابل TON يظهر أعلى المحفظة.<br>
-            </div>
-            <div class="sep"></div>
-            <div class="hint mono">API_BASE: ${API_BASE}</div>
-          `);
-        }
-      }
-    }
-    navWallet.onclick = ()=> setActiveNav(navWallet);
-    navActivity.onclick = ()=> setActiveNav(navActivity);
-    navInfo.onclick = ()=> setActiveNav(navInfo);
-
-    // Buttons
-    document.getElementById("btnOpen").onclick = async ()=>{
-      try{
-        await loadAll();
-        gate.style.display = "none";
-        wallet.style.display = "grid";
-      }catch(e){
-        setGateStatus(String(e.message || e));
-      }
-    };
-
-    document.getElementById("btnRefresh").onclick = async ()=>{
-      try{
-        await loadAll();
-        showToast("تم التحديث");
-      }catch(e){
-        setStatus(String(e.message || e));
-      }
-    };
-
-    document.getElementById("btnClose").onclick = ()=>{
-      const t = tg();
-      if (t) t.close(); else window.close();
-    };
-
-    document.getElementById("btnHistory").onclick = async ()=>{
-      try{
-        await loadHistory();
-        showToast("تم تحديث السجل");
-      }catch(e){
-        activityList.innerHTML = `<div class="label">تعذر جلب السجل: ${String(e.message||e)}</div>`;
-      }
-    };
-
-    document.getElementById("actDeposit").onclick = async ()=>{
-      try{ await showDeposit(); }catch(e){ setStatus(String(e.message||e)); }
-    };
-    document.getElementById("actReceive").onclick = async ()=>{
-      try{ await showReceive(); }catch(e){ setStatus(String(e.message||e)); }
-    };
-    document.getElementById("actSend").onclick = async ()=>{
-      try{ await showSend(); }catch(e){ setStatus(String(e.message||e)); }
     };
 
     // Init
     (function init(){
       const t = tg();
       if (!t){
-        envDot.classList.add("bad");
-        envText.textContent = "متصفح عادي";
-        setGateStatus("افتح هذه الصفحة من داخل Telegram عبر زر web_app في البوت.");
+        env.textContent = "متصفح عادي";
+        dot.classList.remove("ok");
+        document.getElementById("open").disabled = true;
+        showGateErr("لا يمكن فتحها خارج Telegram WebApp.");
         return;
       }
-      t.ready();
-      t.expand();
-
+      t.ready(); t.expand();
       if (t.initData && t.initData.length > 0){
-        envDot.classList.add("ok");
-        envText.textContent = "Telegram ✅";
+        env.textContent = "Telegram ✅";
+        dot.classList.add("ok");
       } else {
-        envDot.classList.add("bad");
-        envText.textContent = "initData فارغ";
-        setGateStatus("أنت داخل Telegram لكن initData فارغ. لازم تفتح الصفحة من زر web_app داخل البوت، مو كرابط عادي.");
+        env.textContent = "initData فارغ";
+        document.getElementById("open").disabled = true;
+        showGateErr("افتح الصفحة من زر web_app داخل البوت (ليس كرابط مباشر).");
       }
-
-      // إعداد ألوان الثيم من Telegram (لطيف)
-      try{
-        const bg = t.themeParams && t.themeParams.bg_color;
-        if (bg) document.body.style.backgroundColor = bg;
-      }catch{}
     })();
+
+    document.getElementById("open").onclick = async ()=>{
+      try{ await openWallet(); }
+      catch(e){ showGateErr(String(e.message||e)); }
+    };
   </script>
 </body>
 </html>
