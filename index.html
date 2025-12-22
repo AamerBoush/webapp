@@ -419,6 +419,28 @@
       }
 
       historyEl.innerHTML = items.map(t => {
+
+    // ✅ (1) تكلفة خدمة — شكل مستقل + note
+        if (t.kind === "fee") {
+          const note = escapeHtml(t.note || "—");
+          return `
+            <div class="item">
+              <div class="left">
+                <div class="badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 7h10M7 17h10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 3v18" stroke="white" stroke-width="2" opacity=".35"/>
+                  </svg>
+                </div>
+                <div class="meta">
+                  <b>تكلفة خدمة</b>
+                  <small>${note} • ${fmtTime(t.ts)}</small>
+                </div>
+              </div>
+              <div class="amt out">-${t.amount}</div>
+            </div>
+          `;
+        }
         const isOut = t.from_uid === state.user_id;
         const title = isOut ? "إرسال نقاط" : "استلام نقاط";
         const sub = isOut ? `إلى UID: ${t.to_uid}` : `من UID: ${t.from_uid}`;
