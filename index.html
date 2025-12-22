@@ -1,64 +1,210 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!doctype html>
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Telegram Hash Login</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Telegram WebApp</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin: 0; background: #0b0f19; color: #e7eaf3; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 20px; }
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 20px; margin: 0 0 10px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      cursor: pointer;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: #2b6cff;
+      color: #fff;
+      font-weight: 600;
+    }
+    .btn.secondary { background: rgba(255,255,255,0.10); }
+    .btn.danger { background: #ff3b30; }
+    .muted { opacity: 0.75; font-size: 13px; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(0,0,0,0.35);
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      margin: 10px 0 0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.10);
+      font-size: 12px;
+    }
+    .ok { background: rgba(76, 217, 100, 0.14); border-color: rgba(76, 217, 100, 0.25); }
+    .warn { background: rgba(255, 204, 0, 0.12); border-color: rgba(255, 204, 0, 0.25); }
+    .bad { background: rgba(255, 59, 48, 0.14); border-color: rgba(255, 59, 48, 0.25); }
+    a { color: #9bb8ff; }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Telegram WebApp — توثيق بكل Request</h1>
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <span id="envPill" class="pill warn">جاري التحقق من بيئة تيليجرام…</span>
+          <div class="muted" style="margin-top:6px;">
+            كل طلب API سيرسل <b>X-Telegram-Init-Data</b> تلقائيًا.
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn secondary" id="btnReload">تحديث الصفحة</button>
+          <button class="btn danger" id="btnClose">إغلاق</button>
+        </div>
+      </div>
+    </div>
 
-<h2>عداد الضغط</h2>
-<div id="count">0</div>
-<button id="btn">اضغط</button>
+    <div class="card">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <b>حالة المستخدم</b>
+          <div class="muted">يتم استدعاء endpoint: <code>/me</code></div>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnMe">جلب بياناتي</button>
+          <button class="btn secondary" id="btnPing">تجربة Endpoint ثاني</button>
+        </div>
+      </div>
+      <pre id="out">—</pre>
+    </div>
 
-<script>
-Telegram.WebApp.ready();
+    <div class="card">
+      <b>ملاحظات مهمة</b>
+      <ul class="muted">
+        <li>لا تعرض <code>initData</code> في الواجهة ولا تطبعه في console ولا ترسله في URL.</li>
+        <li>إذا أخذت 401 “expired” غالبًا تحتاج <b>refresh</b> للويب آب (لأن <code>auth_date</code> انتهى).</li>
+        <li>استخدم HTTPS دائمًا.</li>
+      </ul>
+    </div>
+  </div>
 
-const API_URL = "https://insipidly-transdesert-noble.ngrok-free.dev";
-let sessionToken = null;
+  <script type="module">
+    // ✅ ضع رابط الـ API هنا (يفضل يكون نفس الدومين لتفادي CORS)
+    const API_BASE = "https://insipidly-transdesert-noble.ngrok-free.dev"; // مثال: https://api.example.com
 
-// --------- LOGIN (مرة واحدة) ----------
-async function login() {
-  const res = await fetch(API_URL + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      initData: Telegram.WebApp.initData
-    })
-  });
+    const elOut = document.getElementById("out");
+    const envPill = document.getElementById("envPill");
 
-  const data = await res.json();
-  if (!data.ok) {
-    alert("فشل تسجيل الدخول");
-    return false;
-  }
-
-  sessionToken = data.session_token;
-  return true;
-}
-
-// --------- CLICK ----------
-document.getElementById("btn").onclick = async () => {
-  if (!sessionToken) {
-    const ok = await login();
-    if (!ok) return;
-  }
-
-  const res = await fetch(API_URL + "/click", {
-    method: "POST",
-    headers: {
-      "X-Session-Token": sessionToken
+    function setPill(text, cls) {
+      envPill.textContent = text;
+      envPill.className = `pill ${cls || ""}`;
     }
-  });
 
-  const data = await res.json();
-  if (data.ok) {
-    document.getElementById("count").innerText = data.count;
-  } else {
-    alert("غير مصرح");
-  }
-};
-</script>
+    function pretty(obj) {
+      try { return JSON.stringify(obj, null, 2); } catch { return String(obj); }
+    }
 
+    function show(output) {
+      elOut.textContent = typeof output === "string" ? output : pretty(output);
+    }
+
+    function getTelegram() {
+      return window.Telegram?.WebApp || null;
+    }
+
+    function getInitDataOrThrow() {
+      const tg = getTelegram();
+      if (!tg) throw new Error("هذه الصفحة يجب فتحها من داخل Telegram.");
+      const initData = tg.initData || "";
+      if (!initData) throw new Error("initData غير موجود. افتح الـ WebApp من زر البوت.");
+      return initData;
+    }
+
+    // Wrapper محترم لكل طلب API
+    async function apiFetch(path, { method="GET", headers={}, body=null } = {}) {
+      const initData = getInitDataOrThrow();
+
+      const res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Telegram-Init-Data": initData,
+          ...headers,
+        },
+        body: body ? JSON.stringify(body) : null,
+      });
+
+      // حاول قراءة JSON إن أمكن
+      const isJson = (res.headers.get("content-type") || "").includes("application/json");
+      const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+
+      if (res.status === 401) {
+        // غالباً: expired / bad signature / missing header
+        const msg = (data && data.detail) ? data.detail : "Unauthorized";
+        throw new Error(`401: ${msg}\n\nإذا كان السبب expired: جرّب تحديث الويب آب.`);
+      }
+
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${typeof data === "string" ? data : pretty(data)}`);
+      }
+
+      return data;
+    }
+
+    // تهيئة Telegram WebApp
+    (function init() {
+      const tg = getTelegram();
+      if (!tg) {
+        setPill("ليس داخل Telegram", "bad");
+        show("افتح هذه الصفحة من داخل Telegram WebApp (زر من البوت).");
+        return;
+      }
+
+      tg.ready();     // مهم لإعلام Telegram أن الصفحة جاهزة
+      tg.expand();    // اختياري: يوسع الويب آب
+
+      // خيار لطيف: زر الإغلاق من تيليجرام
+      document.getElementById("btnClose").onclick = () => tg.close();
+      document.getElementById("btnReload").onclick = () => location.reload();
+
+      setPill("داخل Telegram ✅", "ok");
+      show({
+        note: "جاهز للطلبات. اضغط (جلب بياناتي).",
+        initDataLength: (tg.initData || "").length,
+        platform: tg.platform,
+        version: tg.version
+      });
+    })();
+
+    // أحداث الأزرار
+    document.getElementById("btnMe").onclick = async () => {
+      try {
+        show("جاري الطلب…");
+        const data = await apiFetch("/me");
+        show(data);
+      } catch (e) {
+        show(String(e.message || e));
+      }
+    };
+
+    document.getElementById("btnPing").onclick = async () => {
+      try {
+        show("جاري الطلب…");
+        const data = await apiFetch("/endpoint2"); // غيّرها لاسم endpoint عندك
+        show(data);
+      } catch (e) {
+        show(String(e.message || e));
+      }
+    };
+  </script>
 </body>
 </html>
