@@ -635,7 +635,7 @@
           <input id="to" class="field" placeholder="RCV-XXXXXXXX">
 
           <div class="hint" style="margin-top:10px">عدد النقاط</div>
-          <input id="amt" class="field" type="number" min="1" inputmode="numeric" placeholder="مثال: 25">
+          <input id="amt" class="field" type="number" min="13" inputmode="numeric" placeholder="مثال: 25">
           <div class="maxLine">Max <span class="maxLink" id="max">${state.points}</span></div>
 
           <div class="btnRow">
@@ -654,7 +654,7 @@
           const amount = parseInt(document.getElementById("amt").value || "0", 10);
 
           if (!recipient.startsWith("RCV-")) throw new Error("كود المستلم غير صحيح");
-          if (amount <= 0) throw new Error("الكمية غير صحيحة");
+          if (amount <= 13) throw new Error("الحد الأدنى للإرسال هو 13 نقطة");
           if (amount > state.points) throw new Error("لا يوجد رصيد كافي");
 
           toast("جاري الإرسال…", "info", 1200);
