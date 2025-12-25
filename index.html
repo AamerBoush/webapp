@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- ✅ منع التكبير/التصغير -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>Wallet</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -23,8 +24,18 @@
       --shadow:0 18px 55px rgba(0,0,0,.45);
     }
     *{box-sizing:border-box}
+
+    /* ✅ واجهة ثابتة: منع الانزلاق/السكرول + منع الـ bounce */
+    html, body{
+      height:100%;
+      overflow:hidden;
+      overscroll-behavior:none;
+      -webkit-overflow-scrolling: auto;
+      touch-action: none;
+    }
+
     body{
-      margin:0; min-height:100vh;
+      margin:0;
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
       color:var(--text);
       background:
@@ -32,7 +43,15 @@
         radial-gradient(700px 520px at 88% 18%, rgba(34,197,94,.08), transparent 65%),
         linear-gradient(180deg,#070b14,var(--bg));
     }
-    .wrap{max-width:920px;margin:0 auto;padding:16px 14px 26px}
+
+    .wrap{
+      max-width:920px;
+      margin:0 auto;
+      padding:16px 14px 26px;
+      height:100%;
+      overflow:hidden; /* ✅ منع أي سكرول داخل الـ wrap */
+    }
+
     .top{
       display:flex;align-items:center;justify-content:space-between;
       padding:6px 2px 12px;
@@ -104,19 +123,26 @@
     .balanceWrap{display:grid;place-items:center;text-align:center}
     .balanceLabel{color:var(--muted);font-size:12px}
 
-    /* ✅ سطر الرصيد: التجريبي يسار الرصيد */
+    /* ✅ الرصيد التجريبي: على أقصى اليسار وبعيد */
     .balanceLine{
+      position:relative;
+      width:100%;
       display:flex;
       align-items:flex-end;
       justify-content:center;
-      gap:14px;
-      direction:ltr; /* يجعل التجريبي فعلاً على اليسار */
+      min-height:66px;
     }
     .trialMini{
+      position:absolute;
+      left:12px;      /* ✅ أقصى اليسار */
+      bottom:8px;     /* ✅ بمحاذاة الرقم الكبير */
       display:flex;
       flex-direction:column;
-      align-items:center;
-      margin-bottom:8px;
+      align-items:flex-start;
+      text-align:left;
+      gap:3px;
+      margin:0;
+      padding:0;
     }
     .trialMiniNum{
       font-size:20px;
@@ -127,7 +153,8 @@
     .trialMiniNote{
       font-size:11px;
       color:var(--muted);
-      margin-top:3px;
+      line-height:1.2;
+      margin:0;
     }
 
     .balanceNum{
@@ -180,6 +207,9 @@
       margin-top:10px;
       display:flex;flex-direction:column;
       gap:10px;
+
+      /* ✅ لأنك طلبت واجهة ثابتة: لا سكرول هنا */
+      overflow:hidden;
     }
     .item{
       padding:12px 12px;
@@ -202,7 +232,6 @@
     .amt.out{color:rgba(229,231,235,.92)}
     .amt.in{color:var(--green)}
 
-    /* status badge (للإرسال pending) */
     .statusTag{
       font-weight:900;
       font-size:11px;
@@ -348,9 +377,9 @@
         <div class="balanceWrap">
           <div class="balanceLabel">رصيدك</div>
 
-          <!-- ✅ التجريبي يسار الرصيد -->
           <div class="balanceLine">
-            <div class="trialMini">
+            <!-- ✅ رصيد التجربة (يختفي إذا صفر) -->
+            <div id="trialBox" class="trialMini">
               <div id="trial" class="trialMiniNum">—</div>
               <div id="trialNote" class="trialMiniNote">يسترد لاحقا</div>
             </div>
@@ -359,7 +388,8 @@
           </div>
 
           <div class="subLines">
-            <div class="frozen">رصيد مجمّد: <b id="frozen">—</b></div>
+            <!-- ✅ الرصيد المجمد (يختفي إذا صفر) -->
+            <div class="frozen" id="frozenRow">رصيد مجمّد: <b id="frozen">—</b></div>
             <div class="rate">سعر النقطة: <b id="rate">—</b> TON</div>
           </div>
         </div>
@@ -436,9 +466,14 @@
     const gateErr = document.getElementById("gateErr");
 
     const pointsEl = document.getElementById("points");
+
+    const trialBox = document.getElementById("trialBox");
     const trialEl = document.getElementById("trial");
     const trialNoteEl = document.getElementById("trialNote");
+
+    const frozenRow = document.getElementById("frozenRow");
     const frozenEl = document.getElementById("frozen");
+
     const rateEl = document.getElementById("rate");
     const historyEl = document.getElementById("history");
 
@@ -559,14 +594,30 @@
 
     function render(){
       pointsEl.textContent = state.points;
-      frozenEl.textContent = state.frozen;
       rateEl.textContent = String(state.rate);
 
-      if (trialEl) trialEl.textContent = state.trial;
-      if (trialNoteEl) trialNoteEl.textContent = state.trial_note || "يسترد لاحقا";
+      // ✅ رصيد التجربة: إذا صفر لا يظهر
+      if (trialBox) {
+        if (state.trial > 0) {
+          trialBox.style.display = "flex";
+          if (trialEl) trialEl.textContent = String(state.trial);
+          if (trialNoteEl) trialNoteEl.textContent = state.trial_note || "يسترد لاحقا";
+        } else {
+          trialBox.style.display = "none";
+        }
+      }
+
+      // ✅ الرصيد المجمد: إذا صفر لا يظهر
+      if (frozenRow) {
+        if (state.frozen > 0) {
+          frozenRow.style.display = "";
+          frozenEl.textContent = String(state.frozen);
+        } else {
+          frozenRow.style.display = "none";
+        }
+      }
     }
 
-    // ✅ يدعم 4 أنواع سجلات: أجور مهمة / إرسال / استلام / إضافة
     function renderHistory(items){
       if (!items || items.length === 0){
         historyEl.innerHTML = `<div class="item"><div class="meta"><b>لا يوجد عمليات بعد</b><small>ستظهر هنا الإرسال/الاستلام/الإضافة/الأجور</small></div></div>`;
@@ -574,7 +625,6 @@
       }
 
       historyEl.innerHTML = items.map(t => {
-        // 1) أجور مهمة (task_fee) -> kind: fee
         if (t.kind === "fee") {
           const note = escapeHtml(t.note || "—");
           return `
@@ -596,7 +646,6 @@
           `;
         }
 
-        // 2) إضافة نقاط (add_points) -> kind: add
         if (t.kind === "add") {
           return `
             <div class="item">
@@ -617,14 +666,12 @@
           `;
         }
 
-        // 3) إرسال/استلام نقاط (send_points / receive_points) -> kind: transfer
         const isOut = t.from_uid === state.user_id;
         const title = isOut ? "إرسال نقاط" : "استلام نقاط";
         const sub = isOut ? `إلى UID: ${t.to_uid}` : `من UID: ${t.from_uid}`;
         const amtCls = isOut ? "out" : "in";
         const sign = isOut ? "-" : "+";
 
-        // ✅ إظهار الحالة فقط للإرسال (outgoing) وبالنص "جار الإرسال" عند status=0
         let stHtml = "";
         if (isOut && typeof t.status === "number") {
           if (t.status === 0) stHtml = `<span class="statusTag s0">جار الإرسال</span>`;
@@ -674,7 +721,6 @@
       loadHistory().catch(() => renderHistory([]));
     }
 
-    // Actions
     document.getElementById("add").onclick = async ()=>{
       try{
         const r = await apiFetch("/api/add/request", {method:"POST"});
@@ -690,7 +736,7 @@
               <div class="hint">كود التعليق الخاص بك</div>
               <input class="field" readonly value="${r.deposit_code}">
               <div class="btnRow"><button class="btn primary" id="c2">نسخ الكود</button></div>
-              <div class="hint" style="margin-top:10px">ثابت (بدون انتهاء)</div>
+              <div class="hint" style="margin-top:10px"></div>
             </div>
           </div>
         `);
@@ -709,7 +755,7 @@
             <div class="hint">أرسل هذا الكود للمُرسل (ثابت ويمكن استخدامه)</div>
             <input class="field" readonly value="${r.receive_code}">
             <div class="btnRow"><button class="btn good" id="cr">نسخ كود الاستلام</button></div>
-            <div class="hint" style="margin-top:10px">ثابت (بدون انتهاء)</div>
+            <div class="hint" style="margin-top:10px"></div>
           </div>
         `);
         document.getElementById("cr").onclick = ()=> copy(r.receive_code);
@@ -749,7 +795,6 @@
 
           toast("جاري تسجيل الطلب…", "info", 1200);
 
-          // ✅ API الجديد: يسجل فقط (status=0) بدون خصم
           await apiFetch("/api/send", {method:"POST", body:{recipient_code: recipient, amount}});
 
           await loadHistory();
@@ -762,14 +807,12 @@
       };
     };
 
-    // Close app
     document.getElementById("closeApp").onclick = ()=>{
       const t = tg();
       if (t) t.close();
       else window.close();
     };
 
-    // Init
     (function init(){
       const t = tg();
       if (!t){
@@ -788,6 +831,12 @@
       try{ await openWallet(); }
       catch(e){ showGateErr(String(e.message||e)); }
     };
+
+    /* ✅ منع Gesture Zoom خصوصاً على iOS */
+    document.addEventListener("gesturestart", (e)=>{ e.preventDefault(); });
+    document.addEventListener("gesturechange", (e)=>{ e.preventDefault(); });
+    document.addEventListener("gestureend", (e)=>{ e.preventDefault(); });
+    document.addEventListener("touchmove", (e)=>{ e.preventDefault(); }, {passive:false});
   </script>
 </body>
 </html>
