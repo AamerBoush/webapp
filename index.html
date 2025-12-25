@@ -18,7 +18,7 @@
       --yellow:#f59e0b;
       --red:#ef4444;
 
-      --r:14px;         /* أقل انحناء */
+      --r:14px;
       --r2:12px;
       --shadow:0 18px 55px rgba(0,0,0,.45);
     }
@@ -54,7 +54,6 @@
       backdrop-filter: blur(10px);
     }
 
-    /* زر X */
     .xbtn{
       width:40px;height:40px;
       display:grid;place-items:center;
@@ -66,9 +65,7 @@
     .xbtn:active{transform: translateY(1px)}
     .xbtn svg{width:18px;height:18px;opacity:.85}
 
-    .gate{
-      min-height:72vh;display:grid;place-items:center;
-    }
+    .gate{min-height:72vh;display:grid;place-items:center;}
     .gateInner{width:min(560px,100%); padding:16px}
     .eyeBtn{
       width:100%;
@@ -106,6 +103,33 @@
 
     .balanceWrap{display:grid;place-items:center;text-align:center}
     .balanceLabel{color:var(--muted);font-size:12px}
+
+    /* ✅ سطر الرصيد: التجريبي يسار الرصيد */
+    .balanceLine{
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      gap:14px;
+      direction:ltr; /* يجعل التجريبي فعلاً على اليسار */
+    }
+    .trialMini{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .trialMiniNum{
+      font-size:20px;
+      font-weight:700;
+      color:var(--red);
+      line-height:1.1;
+    }
+    .trialMiniNote{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:3px;
+    }
+
     .balanceNum{
       font-size:46px;font-weight:950;letter-spacing:.3px;
       color:var(--green);
@@ -135,7 +159,6 @@
     }
     .action:active{transform: translateY(1px)}
 
-    /* ✅ إزالة الإطارات حول الأيقونات */
     .ic{
       width:auto;height:auto;border:0;background:transparent;
       display:grid;place-items:center;
@@ -179,7 +202,20 @@
     .amt.out{color:rgba(229,231,235,.92)}
     .amt.in{color:var(--green)}
 
-    /* Sheet */
+    /* status badge (للإرسال pending) */
+    .statusTag{
+      font-weight:900;
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      margin-inline-start:6px;
+      white-space:nowrap;
+    }
+    .s0{color:var(--yellow)}
+    .s1{color:var(--green)}
+
     .backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.55);
       display:none;align-items:flex-end;justify-content:center;
@@ -233,7 +269,6 @@
     .maxLine{color:var(--muted);font-size:12px;margin-top:8px}
     .maxLink{color:#93c5fd;cursor:pointer;font-weight:900}
 
-    /* Toast */
     .toastWrap{
       position:fixed;
       left:0; right:0;
@@ -312,7 +347,16 @@
       <div class="card pad">
         <div class="balanceWrap">
           <div class="balanceLabel">رصيدك</div>
-          <div id="points" class="balanceNum">—</div>
+
+          <!-- ✅ التجريبي يسار الرصيد -->
+          <div class="balanceLine">
+            <div class="trialMini">
+              <div id="trial" class="trialMiniNum">—</div>
+              <div id="trialNote" class="trialMiniNote">يسترد لاحقا</div>
+            </div>
+
+            <div id="points" class="balanceNum">—</div>
+          </div>
 
           <div class="subLines">
             <div class="frozen">رصيد مجمّد: <b id="frozen">—</b></div>
@@ -363,7 +407,6 @@
     </div>
   </div>
 
-  <!-- Sheet -->
   <div id="backdrop" class="backdrop">
     <div class="sheet">
       <div class="head">
@@ -378,7 +421,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div class="toastWrap">
     <div id="toast" class="toast info">
       <span class="tag">INFO</span>
@@ -394,6 +436,8 @@
     const gateErr = document.getElementById("gateErr");
 
     const pointsEl = document.getElementById("points");
+    const trialEl = document.getElementById("trial");
+    const trialNoteEl = document.getElementById("trialNote");
     const frozenEl = document.getElementById("frozen");
     const rateEl = document.getElementById("rate");
     const historyEl = document.getElementById("history");
@@ -406,7 +450,15 @@
     const toastMsgEl = document.getElementById("toastMsg");
     let toastTimer = null;
 
-    let state = { user_id: 0, points: 0, frozen: 0, rate: 0, ton_address: "" };
+    let state = {
+      user_id: 0,
+      points: 0,
+      frozen: 0,
+      trial: 0,
+      trial_note: "يسترد لاحقا",
+      rate: 0,
+      ton_address: ""
+    };
 
     function tg(){ return (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null; }
     function joinUrl(base, path){
@@ -456,20 +508,15 @@
       }
 
       const data = await res.json().catch(()=>null);
-    
+
       const detail =
         (data && typeof data.detail === "string" && data.detail.trim())
           ? data.detail.trim()
           : "حدث خطأ غير متوقع";
-      
-      if (res.status === 401 || res.status === 403) {
-        throw new Error(detail);
-      }
-      if (!res.ok) {
-        throw new Error(detail);
-      }
-      
-    
+
+      if (res.status === 401 || res.status === 403) throw new Error(detail);
+      if (!res.ok) throw new Error(detail);
+
       return data;
     }
 
@@ -514,15 +561,20 @@
       pointsEl.textContent = state.points;
       frozenEl.textContent = state.frozen;
       rateEl.textContent = String(state.rate);
+
+      if (trialEl) trialEl.textContent = state.trial;
+      if (trialNoteEl) trialNoteEl.textContent = state.trial_note || "يسترد لاحقا";
     }
 
+    // ✅ يدعم 4 أنواع سجلات: أجور مهمة / إرسال / استلام / إضافة
     function renderHistory(items){
       if (!items || items.length === 0){
-        historyEl.innerHTML = `<div class="item"><div class="meta"><b>لا يوجد عمليات بعد</b><small>ستظهر هنا التحويلات والرسوم</small></div></div>`;
+        historyEl.innerHTML = `<div class="item"><div class="meta"><b>لا يوجد عمليات بعد</b><small>ستظهر هنا الإرسال/الاستلام/الإضافة/الأجور</small></div></div>`;
         return;
       }
 
       historyEl.innerHTML = items.map(t => {
+        // 1) أجور مهمة (task_fee) -> kind: fee
         if (t.kind === "fee") {
           const note = escapeHtml(t.note || "—");
           return `
@@ -535,7 +587,7 @@
                   </svg>
                 </div>
                 <div class="meta">
-                  <b>تكلفة خدمة</b>
+                  <b>أجور مهمة</b>
                   <small>${note} • ${fmtTime(t.ts)}</small>
                 </div>
               </div>
@@ -544,11 +596,42 @@
           `;
         }
 
+        // 2) إضافة نقاط (add_points) -> kind: add
+        if (t.kind === "add") {
+          return `
+            <div class="item">
+              <div class="left">
+                <div class="badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3v10m0 0l-4-4m4 4l4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4 17h16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div class="meta">
+                  <b>إضافة نقاط</b>
+                  <small>${fmtTime(t.ts)}</small>
+                </div>
+              </div>
+              <div class="amt in">+${t.amount}</div>
+            </div>
+          `;
+        }
+
+        // 3) إرسال/استلام نقاط (send_points / receive_points) -> kind: transfer
         const isOut = t.from_uid === state.user_id;
         const title = isOut ? "إرسال نقاط" : "استلام نقاط";
         const sub = isOut ? `إلى UID: ${t.to_uid}` : `من UID: ${t.from_uid}`;
         const amtCls = isOut ? "out" : "in";
         const sign = isOut ? "-" : "+";
+
+        // ✅ إظهار الحالة فقط للإرسال (outgoing) وبالنص "جار الإرسال" عند status=0
+        let stHtml = "";
+        if (isOut && typeof t.status === "number") {
+          if (t.status === 0) stHtml = `<span class="statusTag s0">جار الإرسال</span>`;
+          else if (t.status === 1) stHtml = `<span class="statusTag s1">مكتمل</span>`;
+          else stHtml = `<span class="statusTag">${t.status}</span>`;
+        }
+
         const badge = isOut
           ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-8 18-2-7-8-3z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
           : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21V11m0 0l4 4m-4-4l-4 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 7h16" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -558,7 +641,7 @@
             <div class="left">
               <div class="badge">${badge}</div>
               <div class="meta">
-                <b>${title}</b>
+                <b>${title} ${stHtml}</b>
                 <small>${sub} • ${fmtTime(t.ts)}</small>
               </div>
             </div>
@@ -578,7 +661,9 @@
 
       state.user_id = Number(boot.user_id || 0);
       state.points  = Math.max(0, Number(boot.points || 0));
-      state.frozen  = Math.max(0, Number(boot.frozen_points || 0));  // ✅ رصيد مجمّد
+      state.frozen  = Math.max(0, Number(boot.frozen_points || 0));
+      state.trial   = Math.max(0, Number(boot.trial_points || 0));
+      state.trial_note = boot.trial_note || "يسترد لاحقا";
       state.rate    = Number(boot.point_price_ton || 0);
       state.ton_address = boot.ton_address || "";
       render();
@@ -593,7 +678,6 @@
     document.getElementById("add").onclick = async ()=>{
       try{
         const r = await apiFetch("/api/add/request", {method:"POST"});
-        const exp = new Date(r.expires_at * 1000).toLocaleTimeString("ar");
         openSheet("إضافة نقاط (TON)", `
           <div class="grid2">
             <div>
@@ -606,7 +690,7 @@
               <div class="hint">كود التعليق الخاص بك</div>
               <input class="field" readonly value="${r.deposit_code}">
               <div class="btnRow"><button class="btn primary" id="c2">نسخ الكود</button></div>
-              <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
+              <div class="hint" style="margin-top:10px">ثابت (بدون انتهاء)</div>
             </div>
           </div>
         `);
@@ -620,13 +704,12 @@
     document.getElementById("receive").onclick = async ()=>{
       try{
         const r = await apiFetch("/api/receive/request", {method:"POST"});
-        const exp = new Date(r.expires_at * 1000).toLocaleTimeString("ar");
         openSheet("استلام نقاط", `
           <div>
-            <div class="hint">أرسل هذا الكود للمُرسل (يُستخدم مرة واحدة)</div>
+            <div class="hint">أرسل هذا الكود للمُرسل (ثابت ويمكن استخدامه)</div>
             <input class="field" readonly value="${r.receive_code}">
             <div class="btnRow"><button class="btn good" id="cr">نسخ كود الاستلام</button></div>
-            <div class="hint" style="margin-top:10px">ينتهي: <b>${exp}</b></div>
+            <div class="hint" style="margin-top:10px">ثابت (بدون انتهاء)</div>
           </div>
         `);
         document.getElementById("cr").onclick = ()=> copy(r.receive_code);
@@ -646,7 +729,7 @@
           <div class="maxLine">Max <span class="maxLink" id="max">${state.points}</span></div>
 
           <div class="btnRow">
-            <button class="btn primary" id="go">إرسال</button>
+            <button class="btn primary" id="go">تسجيل طلب الإرسال</button>
             <button class="btn" id="cancel">إلغاء</button>
           </div>
         </div>
@@ -661,20 +744,18 @@
           const amount = parseInt(document.getElementById("amt").value || "0", 10);
 
           if (!recipient.startsWith("RCV-")) throw new Error("كود المستلم غير صحيح");
-          if (amount <= 13) throw new Error("الحد الأدنى للإرسال هو 13 نقطة");
+          if (amount < 13) throw new Error("الحد الأدنى للإرسال هو 13 نقطة");
           if (amount > state.points) throw new Error("لا يوجد رصيد كافي");
 
-          toast("جاري الإرسال…", "info", 1200);
+          toast("جاري تسجيل الطلب…", "info", 1200);
 
-          const r = await apiFetch("/api/send", {method:"POST", body:{recipient, amount}});
-
-          state.points = Number(r.your_points);
-          render();
+          // ✅ API الجديد: يسجل فقط (status=0) بدون خصم
+          await apiFetch("/api/send", {method:"POST", body:{recipient_code: recipient, amount}});
 
           await loadHistory();
           closeSheet();
 
-          toast("تم الإرسال ✅", "ok");
+          toast("تم تسجيل طلب الإرسال ✅", "ok");
         }catch(e){
           toast(String(e.message||e), "err");
         }
